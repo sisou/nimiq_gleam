@@ -1,3 +1,4 @@
+import base32
 import gleam/bit_array
 import gleam/float
 import gleam/int
@@ -17,42 +18,65 @@ pub opaque type Address {
 
 pub fn unserialize(buf: BitArray) -> Result(Address, String) {
   case bit_array.byte_size(buf) == size {
+    False -> Error("Invalid address: wrong length")
     True -> Ok(Address(buf))
-    False -> Error("Invalid address length")
   }
 }
 
 pub fn from_hex(hex: String) -> Result(Address, String) {
   case bit_array.base16_decode(hex) {
     Ok(buf) -> unserialize(buf)
-    Error(_) -> Error("Failed to parse input, not a valid hex encoding")
+    Error(_) -> Error("Invalid address: not a valid hex encoding")
   }
 }
 
 pub fn from_base64(base64: String) -> Result(Address, String) {
   case bit_array.base64_decode(base64) {
     Ok(buf) -> unserialize(buf)
-    Error(_) -> Error("Failed to parse input, not a valid base64 encoding")
+    Error(_) -> Error("Invalid address: not a valid base64 encoding")
   }
 }
 
 pub fn from_base64_url(base64_url: String) -> Result(Address, String) {
   case bit_array.base64_url_decode(base64_url) {
     Ok(buf) -> unserialize(buf)
-    Error(_) -> Error("Failed to parse input, not a valid base64 url encoding")
+    Error(_) -> Error("Invalid address: not a valid base64 url encoding")
   }
 }
 
 pub fn from_user_friendly_address(str: String) -> Result(Address, String) {
-  todo
+  let normalized = str |> string.replace(" ", "") |> string.uppercase()
+
+  use _ <- result.try(case string.slice(normalized, 0, 2) == ccode {
+    False -> Error("Invalid address: wrong country code")
+    True -> Ok(Nil)
+  })
+  use _ <- result.try(case string.length(normalized) == 36 {
+    False -> Error("Invalid address: wrong length")
+    True -> Ok(Nil)
+  })
+
+  // Calculate and check the checksum
+  let encoded = string.drop_left(normalized, 4)
+  use _ <- result.try(case
+    iban_check(encoded <> string.slice(normalized, 0, 4)) == 1
+  {
+    False -> Error("Invalid address: wrong checksum")
+    True -> Ok(Nil)
+  })
+
+  case base32.decode(encoded, nimiq_alphabet) {
+    Ok(buf) -> unserialize(buf)
+    Error(_) -> Error("Invalid address: not a valid user friendly encoding")
+  }
 }
 
 pub fn from_string(str: String) -> Result(Address, String) {
-  // from_user_friendly_address(str)
-  // |> result.lazy_or(fn() { from_hex(str) })
-  from_hex(str)
+  from_user_friendly_address(str)
+  |> result.lazy_or(fn() { from_hex(str) })
   |> result.lazy_or(fn() { from_base64(str) })
   |> result.lazy_or(fn() { from_base64_url(str) })
+  |> result.map_error(fn(_) { "Invalid address: unknown format" })
 }
 
 pub fn serialize(address: Address) -> BitArray {
@@ -60,7 +84,7 @@ pub fn serialize(address: Address) -> BitArray {
 }
 
 pub fn to_hex(address: Address) -> String {
-  bit_array.base16_encode(address.buf)
+  bit_array.base16_encode(address.buf) |> string.lowercase()
 }
 
 pub fn to_base64(address: Address) -> String {
@@ -72,13 +96,12 @@ pub fn to_base64_url(address: Address) -> String {
 }
 
 pub fn to_user_friendly_address(address: Address) -> String {
-  let base32 = "00000000000000000000000000000000"
-  // TODO
+  let encoded = base32.encode(address.buf, nimiq_alphabet)
   let check =
-    { "00" <> int.to_string(98 - iban_check(base32 <> ccode <> "00")) }
+    { "00" <> int.to_string(98 - iban_check(encoded <> ccode <> "00")) }
     |> string.slice(-2, 2)
 
-  let address = ccode <> check <> base32
+  let address = ccode <> check <> encoded
 
   // Add spaces between every 4 characters
   list.range(0, 8)
@@ -88,7 +111,8 @@ pub fn to_user_friendly_address(address: Address) -> String {
 
 fn iban_check(str: String) -> Int {
   let num =
-    string.uppercase(str)
+    str
+    |> string.uppercase()
     |> string.to_utf_codepoints()
     |> list.zip(string.split(str, ""))
     |> list.map(fn(tuple) {
@@ -100,7 +124,8 @@ fn iban_check(str: String) -> Int {
     |> string.join("")
 
   let range =
-    string.length(num)
+    num
+    |> string.length()
     // Convert to float for lossless division
     |> int.to_float()
     |> float.divide(6.0)
@@ -114,7 +139,8 @@ fn iban_check(str: String) -> Int {
     |> list.range(0, _)
 
   let tmp =
-    list.fold(range, "", fn(tmp, i) {
+    range
+    |> list.fold("", fn(tmp, i) {
       { tmp <> string.slice(num, i * 6, 6) }
       |> int.parse()
       // We know that the string is only numbers, so parsing should never fail
