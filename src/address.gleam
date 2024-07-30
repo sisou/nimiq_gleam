@@ -16,7 +16,7 @@ pub opaque type Address {
   Address(buf: BitArray)
 }
 
-pub fn unserialize(buf: BitArray) -> Result(Address, String) {
+pub fn deserialize(buf: BitArray) -> Result(Address, String) {
   case bit_array.byte_size(buf) == size {
     False -> Error("Invalid address: wrong length")
     True -> Ok(Address(buf))
@@ -25,21 +25,21 @@ pub fn unserialize(buf: BitArray) -> Result(Address, String) {
 
 pub fn from_hex(hex: String) -> Result(Address, String) {
   case bit_array.base16_decode(hex) {
-    Ok(buf) -> unserialize(buf)
+    Ok(buf) -> deserialize(buf)
     Error(_) -> Error("Invalid address: not a valid hex encoding")
   }
 }
 
 pub fn from_base64(base64: String) -> Result(Address, String) {
   case bit_array.base64_decode(base64) {
-    Ok(buf) -> unserialize(buf)
+    Ok(buf) -> deserialize(buf)
     Error(_) -> Error("Invalid address: not a valid base64 encoding")
   }
 }
 
 pub fn from_base64_url(base64_url: String) -> Result(Address, String) {
   case bit_array.base64_url_decode(base64_url) {
-    Ok(buf) -> unserialize(buf)
+    Ok(buf) -> deserialize(buf)
     Error(_) -> Error("Invalid address: not a valid base64 url encoding")
   }
 }
@@ -66,7 +66,7 @@ pub fn from_user_friendly_address(str: String) -> Result(Address, String) {
   })
 
   case base32.decode(encoded, nimiq_alphabet) {
-    Ok(buf) -> unserialize(buf)
+    Ok(buf) -> deserialize(buf)
     Error(_) -> Error("Invalid address: not a valid user friendly encoding")
   }
 }
