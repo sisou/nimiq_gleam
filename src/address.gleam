@@ -16,6 +16,10 @@ pub opaque type Address {
   Address(buf: BitArray)
 }
 
+pub fn zero() -> Address {
+  Address(<<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>>)
+}
+
 pub fn deserialize(buf: BitArray) -> Result(Address, String) {
   case bit_array.byte_size(buf) == size {
     False -> Error("Invalid address: wrong length")
