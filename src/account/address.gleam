@@ -1,10 +1,10 @@
-import base32
 import gleam/bit_array
 import gleam/float
 import gleam/int
 import gleam/list
 import gleam/result
 import gleam/string
+import utils/base32
 
 const size = 20
 
@@ -17,33 +17,50 @@ pub opaque type Address {
 }
 
 pub fn zero() -> Address {
-  Address(<<0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0>>)
+  Address(<<0:unit(8)-size(size)>>)
 }
 
-pub fn deserialize(buf: BitArray) -> Result(Address, String) {
-  case bit_array.byte_size(buf) == size {
-    False -> Error("Invalid address: wrong length")
-    True -> Ok(Address(buf))
+pub fn deserialize(buf: BitArray) -> Result(#(Address, BitArray), String) {
+  case buf {
+    <<bytes:unit(8)-size(size)-bytes, rest:bits>> -> Ok(#(Address(bytes), rest))
+    _ -> Error("Invalid address: out of data")
+  }
+}
+
+pub fn deserialize_all(buf: BitArray) -> Result(Address, String) {
+  case deserialize(buf) {
+    Ok(#(address, <<>>)) -> Ok(address)
+    Ok(_) -> Error("Invalid address: trailing bytes")
+    Error(err) -> Error(err)
+  }
+}
+
+pub fn from_hash(hash: BitArray) -> Result(Address, String) {
+  let buf = hash |> bit_array.slice(0, size)
+
+  case buf {
+    Ok(buf) -> Ok(Address(buf))
+    Error(_) -> Error("Invalid address: hash too short")
   }
 }
 
 pub fn from_hex(hex: String) -> Result(Address, String) {
   case bit_array.base16_decode(hex) {
-    Ok(buf) -> deserialize(buf)
+    Ok(buf) -> deserialize_all(buf)
     Error(_) -> Error("Invalid address: not a valid hex encoding")
   }
 }
 
 pub fn from_base64(base64: String) -> Result(Address, String) {
   case bit_array.base64_decode(base64) {
-    Ok(buf) -> deserialize(buf)
+    Ok(buf) -> deserialize_all(buf)
     Error(_) -> Error("Invalid address: not a valid base64 encoding")
   }
 }
 
 pub fn from_base64_url(base64_url: String) -> Result(Address, String) {
   case bit_array.base64_url_decode(base64_url) {
-    Ok(buf) -> deserialize(buf)
+    Ok(buf) -> deserialize_all(buf)
     Error(_) -> Error("Invalid address: not a valid base64 url encoding")
   }
 }
@@ -70,7 +87,7 @@ pub fn from_user_friendly_address(str: String) -> Result(Address, String) {
   })
 
   case base32.decode(encoded, nimiq_alphabet) {
-    Ok(buf) -> deserialize(buf)
+    Ok(buf) -> deserialize_all(buf)
     Error(_) -> Error("Invalid address: not a valid user friendly encoding")
   }
 }
@@ -88,15 +105,15 @@ pub fn serialize(address: Address) -> BitArray {
 }
 
 pub fn to_hex(address: Address) -> String {
-  bit_array.base16_encode(address.buf) |> string.lowercase()
+  address |> serialize() |> bit_array.base16_encode() |> string.lowercase()
 }
 
 pub fn to_base64(address: Address) -> String {
-  bit_array.base64_encode(address.buf, True)
+  address |> serialize() |> bit_array.base64_encode(True)
 }
 
 pub fn to_base64_url(address: Address) -> String {
-  bit_array.base64_url_encode(address.buf, True)
+  address |> serialize() |> bit_array.base64_url_encode(True)
 }
 
 pub fn to_user_friendly_address(address: Address) -> String {
@@ -134,7 +151,7 @@ fn iban_check(str: String) -> Int {
     |> int.to_float()
     |> float.divide(6.0)
     // float.divide returns an Error only when dividing by 0, which we don't do here
-    |> result.unwrap(0.0)
+    |> result.lazy_unwrap(fn() { panic })
     |> float.ceiling()
     // Convert back to int
     |> float.round()
@@ -147,13 +164,14 @@ fn iban_check(str: String) -> Int {
     |> list.fold("", fn(tmp, i) {
       { tmp <> string.slice(num, i * 6, 6) }
       |> int.parse()
-      // We know that the string is only numbers, so parsing should never fail
-      |> result.unwrap(0)
+      // We know that the string is only numbers, so parsing cannot fail
+      |> result.lazy_unwrap(fn() { panic })
       |> int.modulo(97)
       // int.modulo returns an Error only when dividing by 0, which we don't do here
-      |> result.unwrap(0)
+      |> result.lazy_unwrap(fn() { panic })
       |> int.to_string()
     })
 
-  int.parse(tmp) |> result.unwrap(0)
+  // We know that the string is only numbers, so parsing cannot fail
+  int.parse(tmp) |> result.lazy_unwrap(fn() { panic })
 }

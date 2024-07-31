@@ -11,4 +11,4 @@ pub fn encode(num: Int) -> BitArray
 ///
 /// This function will raise ArgumentError if the given b is not a valid LEB128 integer.
 @external(erlang, "Elixir.Varint.LEB128", "decode")
-pub fn decode(bytes: BitArray) -> #(Int, BitArray)
+pub fn decode(b: BitArray) -> #(Int, BitArray)

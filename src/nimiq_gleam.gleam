@@ -1,4 +1,4 @@
-import address
+import account/address
 import argv
 import gleam/io
 
