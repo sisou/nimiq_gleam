@@ -300,13 +300,11 @@ pub fn serialize(tx: Transaction) -> Result(BitArray, String) {
       |> bytes_builder.append(<<enums.from_network_id(tx.network_id):8>>)
       // Signature
       |> bytes_builder.append(signature.serialize(signature_proof.signature))
-      |> bytes_builder.append_builder(case signature_proof.webauthn_fields {
+      |> bytes_builder.append(case signature_proof.webauthn_fields {
         Some(fields) -> {
-          bytes_builder.new()
-          |> bytes_builder.append(<<bit_array.byte_size(fields):8>>)
-          |> bytes_builder.append(fields)
+          signature_proof.serialize_webauthn_fields(fields)
         }
-        None -> bytes_builder.new()
+        None -> <<>>
       })
       // Convert to bit array
       |> bytes_builder.to_bit_array()

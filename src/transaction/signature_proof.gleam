@@ -1,4 +1,3 @@
-import gleam/bit_array
 import gleam/bytes_builder
 import gleam/int
 import gleam/option.{type Option, None, Some}
@@ -10,6 +9,7 @@ import transaction/enums.{
   type SignatureProofAlgorithm, ES256Algorithm, Ed25519Algorithm,
 }
 import transaction/flags.{type SignatureProofFlags, WebauthnFieldsFlag}
+import utils/serde
 
 pub type SignatureProof {
   SignatureProof(
@@ -17,7 +17,16 @@ pub type SignatureProof {
     merkle_path: MerklePath,
     signature: Signature,
     // TODO: Add WebAuthnFields type
-    webauthn_fields: Option(BitArray),
+    webauthn_fields: Option(WebauthnFields),
+  )
+}
+
+pub type WebauthnFields {
+  WebauthnFields(
+    origin_json_str: String,
+    has_cross_origin_field: Bool,
+    client_data_extra_json: String,
+    authenticator_data_suffix: BitArray,
   )
 }
 
@@ -28,7 +37,7 @@ pub fn single_sig(public_key: PublicKey, signature: Signature) -> SignatureProof
 pub fn single_sig_webauthn(
   public_key: PublicKey,
   signature: Signature,
-  webauthn_fields: BitArray,
+  webauthn_fields: WebauthnFields,
 ) -> SignatureProof {
   SignatureProof(
     public_key,
@@ -54,10 +63,13 @@ pub fn deserialize(buf: BitArray) -> Result(#(SignatureProof, BitArray), String)
   case flags {
     None ->
       Ok(#(SignatureProof(public_key, merkle_path, signature, None), rest))
-    Some(WebauthnFieldsFlag) ->
-      Ok(
-        #(SignatureProof(public_key, merkle_path, signature, Some(rest)), <<>>),
-      )
+    Some(WebauthnFieldsFlag) -> {
+      use #(fields, rest) <- result.try(deserialize_webauthn_fields(rest))
+      Ok(#(
+        SignatureProof(public_key, merkle_path, signature, Some(fields)),
+        rest,
+      ))
+    }
   }
 }
 
@@ -105,13 +117,9 @@ pub fn serialize(proof: SignatureProof) -> BitArray {
   |> bytes_builder.append(public_key.serialize(proof.public_key))
   |> bytes_builder.append(merkle_path.serialize(proof.merkle_path))
   |> bytes_builder.append(signature.serialize(proof.signature))
-  |> bytes_builder.append_builder(case proof.webauthn_fields {
-    Some(fields) -> {
-      bytes_builder.new()
-      |> bytes_builder.append(<<bit_array.byte_size(fields):8>>)
-      |> bytes_builder.append(fields)
-    }
-    None -> bytes_builder.new()
+  |> bytes_builder.append(case proof.webauthn_fields {
+    Some(fields) -> serialize_webauthn_fields(fields)
+    None -> <<>>
   })
   |> bytes_builder.to_bit_array()
 }
@@ -135,14 +143,32 @@ pub fn deserialize_type_and_flags_byte(
 
 pub fn deserialize_webauthn_fields(
   buf: BitArray,
-) -> Result(#(BitArray, BitArray), String) {
-  case buf {
-    <<len:8, rest:bits>> -> {
-      case rest {
-        <<fields:unit(8)-size(len)-bytes, rest:bits>> -> Ok(#(fields, rest))
-        _ -> Error("Invalid signature proof webauthn fields: out of data")
-      }
-    }
-    _ -> Error("Invalid signature proof webauthn fields: out of data")
-  }
+) -> Result(#(WebauthnFields, BitArray), String) {
+  use #(origin_json_str, rest) <- result.try(serde.deserialize_string(buf))
+  use #(has_cross_origin_field, rest) <- result.try(serde.deserialize_bool(rest))
+  use #(client_data_extra_json, rest) <- result.try(serde.deserialize_string(
+    rest,
+  ))
+  use #(authenticator_data_suffix, rest) <- result.try(serde.deserialize_bytes(
+    rest,
+  ))
+
+  Ok(#(
+    WebauthnFields(
+      origin_json_str,
+      has_cross_origin_field,
+      client_data_extra_json,
+      authenticator_data_suffix,
+    ),
+    rest,
+  ))
+}
+
+pub fn serialize_webauthn_fields(fields: WebauthnFields) -> BitArray {
+  bytes_builder.new()
+  |> serde.serialize_string(fields.origin_json_str)
+  |> serde.serialize_bool(fields.has_cross_origin_field)
+  |> serde.serialize_string(fields.client_data_extra_json)
+  |> serde.serialize_bytes(fields.authenticator_data_suffix)
+  |> bytes_builder.to_bit_array()
 }
