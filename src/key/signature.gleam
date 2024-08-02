@@ -39,7 +39,7 @@ fn deserialize_eddsa(buf: BitArray) -> Result(#(Signature, BitArray), String) {
 
 fn deserialize_ecdsa(buf: BitArray) -> Result(#(Signature, BitArray), String) {
   case buf {
-    <<bytes:unit(8)-size(33)-bytes, rest:bits>> -> {
+    <<bytes:unit(8)-size(64)-bytes, rest:bits>> -> {
       Ok(#(EcDsaSignature(bytes), rest))
     }
     _ -> Error("Invalid public key: out of data")
