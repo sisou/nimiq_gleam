@@ -41,6 +41,11 @@ pub fn deserialize_string(buf: BitArray) -> Result(#(String, BitArray), String) 
   }
 }
 
+pub fn serialize_int(buf: BytesBuilder, num: Int, bit_size: Int) -> BytesBuilder {
+  buf
+  |> bytes_builder.append(<<num:size(bit_size)>>)
+}
+
 pub fn deserialize_int(
   buf: BitArray,
   bit_size: Int,
@@ -52,8 +57,7 @@ pub fn deserialize_int(
 }
 
 pub fn serialize_bool(buf: BytesBuilder, value: Bool) -> BytesBuilder {
-  buf
-  |> bytes_builder.append(<<bool.to_int(value):8>>)
+  serialize_int(buf, bool.to_int(value), 8)
 }
 
 pub fn deserialize_bool(buf: BitArray) -> Result(#(Bool, BitArray), String) {
