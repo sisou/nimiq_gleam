@@ -39,16 +39,13 @@ fn deserialize_ecdsa(buf: BitArray) -> Result(#(PublicKey, BitArray), String) {
 }
 
 pub fn to_address(public_key: PublicKey) -> Address {
-  let address =
+  let assert Ok(address) =
     public_key
     |> serialize()
     |> blake2.hash2b(32)
     |> address.from_hash()
 
-  case address {
-    Ok(address) -> address
-    Error(_) -> panic as "Could not derive address from public key"
-  }
+  address
 }
 
 pub fn serialize(public_key: PublicKey) -> BitArray {

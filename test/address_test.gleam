@@ -2,7 +2,7 @@ import account/address
 import dummy
 import gleeunit/should
 import key/ed25519/public_key as ed25519_public_key
-import key/public_key
+import key/public_key.{EdDsaPublicKey}
 
 pub fn from_hex_to_userfriendly_test() {
   case address.from_string("0000000000000000000000000000000000000000") {
@@ -199,8 +199,7 @@ pub fn decoding_errors_test() {
 pub fn from_public_key_test() {
   case ed25519_public_key.from_hex(dummy.public_key_hex) {
     Ok(pub_key) ->
-      pub_key
-      |> public_key.EdDsaPublicKey
+      EdDsaPublicKey(pub_key)
       |> public_key.to_address()
       |> address.to_user_friendly_address()
       |> should.equal(dummy.address)
