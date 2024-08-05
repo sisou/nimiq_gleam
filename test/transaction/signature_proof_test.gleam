@@ -67,12 +67,12 @@ pub fn regualar_webauthn_signature_proof_test() {
   let assert Ok(public) =
     "02915782665472928bfe72c2869bbbd6bc0c239379d5a150ea5e2b19b205d53659"
     |> bit_array.base16_decode()
-    |> result.map(fn(buf) { EcDsaPublicKey(buf) })
+    |> result.map(EcDsaPublicKey)
 
   let assert Ok(signature) =
     "07b917e958f6fafcad747ac95e20ddf1ac63fc5d99bf4516e902e94591641084015ef7ed46034af18512743a0dcbc7a786aae27110b8cbd1cce81b062bd80c6e"
     |> bit_array.base16_decode()
-    |> result.map(fn(buf) { EcDsaSignature(buf) })
+    |> result.map(EcDsaSignature)
 
   let webauthn_fields =
     WebauthnFields(
@@ -106,12 +106,12 @@ pub fn android_chrome_webauthn_signature_proof_test() {
   let assert Ok(public) =
     "0327e1f7995bde5df8a22bd9c27833b532d79c2350e61fc9a85621d1438eabeb7c"
     |> bit_array.base16_decode()
-    |> result.map(fn(buf) { EcDsaPublicKey(buf) })
+    |> result.map(EcDsaPublicKey)
 
   let assert Ok(signature) =
     "a4fe6e4e2990335d2e4ceeaf63ee149e2dc2e0703bc26f6323f4bebb454c7b505f5faf4fc5a47ea89bedf9d37786ce7e5355b179bdf13e9771ce426f13867a9d"
     |> bit_array.base16_decode()
-    |> result.map(fn(buf) { EcDsaSignature(buf) })
+    |> result.map(EcDsaSignature)
 
   let webauthn_fields =
     WebauthnFields(
