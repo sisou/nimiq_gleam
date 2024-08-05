@@ -46,7 +46,8 @@ pub fn deserialize(buf: BitArray) -> Result(#(MerklePath, BitArray), String) {
 pub fn deserialize_all(buf: BitArray) -> Result(MerklePath, String) {
   case deserialize(buf) {
     Ok(#(path, <<>>)) -> Ok(path)
-    _ -> panic as "Invalid merkle path: trailing bytes"
+    Ok(_) -> Error("Invalid merkle path: trailing bytes")
+    Error(err) -> Error(err)
   }
 }
 
