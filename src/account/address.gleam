@@ -5,6 +5,7 @@ import gleam/list
 import gleam/result
 import gleam/string
 import utils/base32
+import utils/misc
 
 const size = 20
 
@@ -151,7 +152,7 @@ fn iban_check(str: String) -> Int {
     |> int.to_float()
     |> float.divide(6.0)
     // float.divide returns an Error only when dividing by 0, which we don't do here
-    |> unwrap()
+    |> misc.unwrap()
     |> float.ceiling()
     // Convert back to int
     |> float.round()
@@ -165,20 +166,13 @@ fn iban_check(str: String) -> Int {
       { tmp <> string.slice(num, i * 6, 6) }
       |> int.parse()
       // We know that the string is only numbers, so parsing cannot fail
-      |> unwrap()
+      |> misc.unwrap()
       |> int.modulo(97)
       // int.modulo returns an Error only when dividing by 0, which we don't do here
-      |> unwrap()
+      |> misc.unwrap()
       |> int.to_string()
     })
 
   // We know that the string is only numbers, so parsing cannot fail
-  int.parse(tmp) |> unwrap()
-}
-
-fn unwrap(res: Result(a, _)) -> a {
-  case res {
-    Ok(a) -> a
-    Error(_) -> panic as "Called unwrap on an Error value"
-  }
+  int.parse(tmp) |> misc.unwrap()
 }

@@ -19,23 +19,25 @@ pub fn run() -> glint.Command(Nil) {
   // Set the help text for the command
   use <- glint.command_help("Converts an address to another format.")
 
+  use addr <- glint.named_arg("ADDRESS")
+
   // Register flags with the command
   use format <- glint.flag(format_flag())
 
   // Start the body of the command
   // This is what will be executed when the command is run
-  use _, args, flags <- glint.command()
+  use named, _, flags <- glint.command()
+
+  // Get the address from the named arguments
+  let addr =
+    addr(named)
+    |> address.from_string()
 
   // We can assert here because the format flag has a default and will therefore always have a value
   let assert Ok(format) = format(flags)
 
   // Business logic of the command
-  let address = case args {
-    [address, ..] -> address.from_string(address)
-    _ -> Error("No address provided")
-  }
-
-  case address {
+  case addr {
     Ok(addr) ->
       case format {
         "user-friendly" -> address.to_user_friendly_address(addr)
