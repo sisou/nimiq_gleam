@@ -38,7 +38,8 @@ pub fn serialize_basic_test() {
       None,
     )
 
-  should.equal(transaction.serialize_content(tx), <<
+  transaction.serialize_content(tx)
+  |> should.equal(<<
     0, 0, 104, 157, 174, 47, 119, 176, 72, 220, 192, 142, 20, 215, 49, 4, 234,
     20, 34, 43, 91, 225, 0, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
     17, 17, 17, 17, 17, 17, 17, 0, 0, 0, 0, 0, 5, 245, 225, 0, 0, 0, 0, 0, 0, 0,
@@ -66,8 +67,8 @@ pub fn serialize_basic_test() {
 
   let tx = transaction.set_proof(tx, signature_proof.serialize(proof))
 
-  should.equal(
-    transaction.serialize(tx),
+  transaction.serialize(tx)
+  |> should.equal(
     Ok(<<
       0, 0, 59, 106, 39, 188, 206, 182, 164, 45, 98, 163, 168, 208, 42, 111, 13,
       115, 101, 50, 21, 119, 29, 226, 67, 166, 58, 192, 72, 161, 139, 89, 218,
@@ -107,7 +108,8 @@ pub fn serialize_extended_test() {
       None,
     )
 
-  should.equal(transaction.serialize_content(tx), <<
+  transaction.serialize_content(tx)
+  |> should.equal(<<
     0, 12, 78, 105, 109, 105, 113, 32, 114, 111, 99, 107, 115, 33, 104, 157, 174,
     47, 119, 176, 72, 220, 192, 142, 20, 215, 49, 4, 234, 20, 34, 43, 91, 225, 0,
     17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
@@ -136,8 +138,8 @@ pub fn serialize_extended_test() {
 
   let tx = transaction.set_proof(tx, signature_proof.serialize(proof))
 
-  should.equal(
-    transaction.serialize(tx),
+  transaction.serialize(tx)
+  |> should.equal(
     Ok(<<
       1, 104, 157, 174, 47, 119, 176, 72, 220, 192, 142, 20, 215, 49, 4, 234, 20,
       34, 43, 91, 225, 0, 0, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
@@ -168,44 +170,24 @@ pub fn deserialize_basic_test() {
       54, 14,
     >>)
 
-  tx.sender
-  |> address.to_user_friendly_address()
-  |> should.equal("NQ17 D2ES UBTP N14D RG4E 2KBK 217A 2GH2 NNY1")
-
-  tx.sender_type
-  |> should.equal(BasicAccount)
-
-  tx.sender_data
-  |> should.equal(<<>>)
-
-  tx.recipient
-  |> address.to_user_friendly_address()
-  |> should.equal("NQ34 248H 248H 248H 248H 248H 248H 248H 248H")
-
-  tx.recipient_type
-  |> should.equal(BasicAccount)
-
-  tx.recipient_data
-  |> should.equal(<<>>)
-
-  tx.value
-  |> should.equal(Coin(100_000_000))
-
-  tx.fee
-  |> should.equal(Coin(138))
-
-  tx.validity_start_height
-  |> should.equal(100_000)
-
-  tx.network_id
-  |> should.equal(TestAlbatrossNetwork)
-
-  tx.proof
-  |> bit_array.base16_encode()
-  |> string.lowercase()
-  |> should.equal(
-    "003b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da2900e97d14e5ab8b9e9b71f7d2952457810ff5c8c762ab92dded852eb915ed38e1f0c1332abced2a6dec66cc4cbfd025de9609712582872f94eabc67644b4d4f360e",
-  )
+  let assert "NQ17 D2ES UBTP N14D RG4E 2KBK 217A 2GH2 NNY1" =
+    tx.sender
+    |> address.to_user_friendly_address()
+  let assert BasicAccount = tx.sender_type
+  let assert <<>> = tx.sender_data
+  let assert "NQ34 248H 248H 248H 248H 248H 248H 248H 248H" =
+    tx.recipient
+    |> address.to_user_friendly_address()
+  let assert BasicAccount = tx.recipient_type
+  let assert <<>> = tx.recipient_data
+  let assert Coin(100_000_000) = tx.value
+  let assert Coin(138) = tx.fee
+  let assert 100_000 = tx.validity_start_height
+  let assert TestAlbatrossNetwork = tx.network_id
+  let assert "003b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da2900e97d14e5ab8b9e9b71f7d2952457810ff5c8c762ab92dded852eb915ed38e1f0c1332abced2a6dec66cc4cbfd025de9609712582872f94eabc67644b4d4f360e" =
+    tx.proof
+    |> bit_array.base16_encode()
+    |> string.lowercase()
 }
 
 pub fn deserialize_extended_test() {
@@ -224,43 +206,22 @@ pub fn deserialize_extended_test() {
       50, 243, 19, 171, 69, 198, 9,
     >>)
 
-  tx.sender
-  |> address.to_user_friendly_address()
-  |> should.equal("NQ17 D2ES UBTP N14D RG4E 2KBK 217A 2GH2 NNY1")
-
-  tx.sender_type
-  |> should.equal(BasicAccount)
-
-  tx.sender_data
-  |> should.equal(<<>>)
-
-  tx.recipient
-  |> address.to_user_friendly_address()
-  |> should.equal("NQ34 248H 248H 248H 248H 248H 248H 248H 248H")
-
-  tx.recipient_type
-  |> should.equal(BasicAccount)
-
-  tx.recipient_data
-  |> bit_array.to_string()
-  |> should.equal(Ok("Nimiq rocks!"))
-
-  tx.value
-  |> should.equal(Coin(100_000_000))
-
-  tx.fee
-  |> should.equal(Coin(138))
-
-  tx.validity_start_height
-  |> should.equal(100_000)
-
-  tx.network_id
-  |> should.equal(TestAlbatrossNetwork)
-
-  tx.proof
-  |> bit_array.base16_encode()
-  |> string.lowercase()
-  |> should.equal(
-    "003b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da2900ae6c4c8bc8b3cbf2e96a1845e846bc65e5e9d60d9989746cb14e7f0b195d77ec48eaaf592dc3720ba2d095fa7d15808c168b687cb0092e16f332f313ab45c609",
-  )
+  let assert "NQ17 D2ES UBTP N14D RG4E 2KBK 217A 2GH2 NNY1" =
+    tx.sender
+    |> address.to_user_friendly_address()
+  let assert BasicAccount = tx.sender_type
+  let assert <<>> = tx.sender_data
+  let assert "NQ34 248H 248H 248H 248H 248H 248H 248H 248H" =
+    tx.recipient
+    |> address.to_user_friendly_address()
+  let assert BasicAccount = tx.recipient_type
+  let assert Ok("Nimiq rocks!") = tx.recipient_data |> bit_array.to_string()
+  let assert Coin(100_000_000) = tx.value
+  let assert Coin(138) = tx.fee
+  let assert 100_000 = tx.validity_start_height
+  let assert TestAlbatrossNetwork = tx.network_id
+  let assert "003b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da2900ae6c4c8bc8b3cbf2e96a1845e846bc65e5e9d60d9989746cb14e7f0b195d77ec48eaaf592dc3720ba2d095fa7d15808c168b687cb0092e16f332f313ab45c609" =
+    tx.proof
+    |> bit_array.base16_encode()
+    |> string.lowercase()
 }

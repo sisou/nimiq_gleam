@@ -151,7 +151,7 @@ fn iban_check(str: String) -> Int {
     |> int.to_float()
     |> float.divide(6.0)
     // float.divide returns an Error only when dividing by 0, which we don't do here
-    |> result.lazy_unwrap(fn() { panic })
+    |> unwrap()
     |> float.ceiling()
     // Convert back to int
     |> float.round()
@@ -165,13 +165,20 @@ fn iban_check(str: String) -> Int {
       { tmp <> string.slice(num, i * 6, 6) }
       |> int.parse()
       // We know that the string is only numbers, so parsing cannot fail
-      |> result.lazy_unwrap(fn() { panic })
+      |> unwrap()
       |> int.modulo(97)
       // int.modulo returns an Error only when dividing by 0, which we don't do here
-      |> result.lazy_unwrap(fn() { panic })
+      |> unwrap()
       |> int.to_string()
     })
 
   // We know that the string is only numbers, so parsing cannot fail
-  int.parse(tmp) |> result.lazy_unwrap(fn() { panic })
+  int.parse(tmp) |> unwrap()
+}
+
+fn unwrap(res: Result(a, _)) -> a {
+  case res {
+    Ok(a) -> a
+    Error(_) -> panic as "Called unwrap on an Error value"
+  }
 }

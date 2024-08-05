@@ -60,23 +60,17 @@ import nimiq_gleam/transaction/signature_proof
 import nimiq_gleam/transaction/transaction
 
 let tx =
+  let assert Ok(sender) =
+    "NQ17 D2ES UBTP N14D RG4E 2KBK 217A 2GH2 NNY1"
+    |> address.from_user_friendly_address()
+
+  let assert Ok(recipient) =
+    "NQ34 248H 248H 248H 248H 248H 248H 248H 248H"
+    |> address.from_user_friendly_address()
+
   transaction.new_basic(
-    case // Sender address
-      address.from_user_friendly_address(
-        "NQ17 D2ES UBTP N14D RG4E 2KBK 217A 2GH2 NNY1",
-      )
-    {
-      Ok(addr) -> addr
-      Error(_) -> panic as "Invalid sender address"
-    },
-    case // Recipient address
-      address.from_user_friendly_address(
-        "NQ34 248H 248H 248H 248H 248H 248H 248H 248H",
-      )
-    {
-      Ok(addr) -> addr
-      Error(_) -> panic as "Invalid recipient address"
-    },
+    sender,
+    recipient,
     Coin(100_000_000), // Value in luna
     Coin(138), // Fee in luna
     100_000, // Validity start height
@@ -85,15 +79,10 @@ let tx =
   )
 
 // Construct signature proof
-let private_key = case
+let assert Ok(private) =
   private_key.from_hex(
-    // Replace with your private key
     "0000000000000000000000000000000000000000000000000000000000000000",
   )
-{
-  Ok(pk) -> pk
-  Error(_) -> panic as "Invalid private key"
-}
 let public_key = ed25519_public_key.derive_key(private_key)
 let signature =
   ed25519_signature.create(
