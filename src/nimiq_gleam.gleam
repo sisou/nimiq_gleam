@@ -1,6 +1,6 @@
 import argv
 import cli/address_command
-import cli/transaction_command
+import cli/new_transaction_command
 import glint
 
 pub fn main() {
@@ -12,7 +12,7 @@ pub fn main() {
   |> glint.pretty_help(glint.default_pretty_help())
   // With subcommands
   |> glint.add(at: ["address"], do: address_command.run())
-  |> glint.add(at: ["tx"], do: transaction_command.run())
+  |> glint.add(at: ["new-tx"], do: new_transaction_command.run())
   // Execute with the arguments from stdin
   |> glint.run(argv.load().arguments)
 }
