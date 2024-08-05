@@ -1,17 +1,16 @@
-import account/address
 import argv
-import gleam/io
+import cli/address_command
+import glint
 
 pub fn main() {
-  case argv.load().arguments {
-    ["address", str] -> format_address(str)
-    _ -> io.println("Usage: nimiq_gleam address <address>")
-  }
-}
-
-fn format_address(str) {
-  case address.from_string(str) {
-    Ok(addr) -> io.println(address.to_user_friendly_address(addr))
-    Error(err) -> io.println_error("ERROR: " <> err)
-  }
+  // Create a new glint instance
+  glint.new()
+  // With an app name which is used when printing help text
+  |> glint.with_name("nimiq_gleam")
+  // With pretty help enabled, using the built-in colours
+  |> glint.pretty_help(glint.default_pretty_help())
+  // With subcommands
+  |> glint.add(at: ["address"], do: address_command.run())
+  // Execute with the arguments from stdin
+  |> glint.run(argv.load().arguments)
 }
