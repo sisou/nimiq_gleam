@@ -107,11 +107,45 @@ io.println(transaction.to_hex(tx))
 
 ## CLI
 
-Convert an address from any representation to user-friendly address format:
+Use `--help` at the root or command level to see usage instructions.
+
+### Address command
+
+Convert an address from any string format to another string format.
 
 ```sh
-nimiq_gleam address 0000000000000000000000000000000000000000
+# See usage instructions:
+nimiq_gleam address --help
+
+# From hex to user-friendly:
+nimiq_gleam address 0000000000000000000000000000000000000000 --format=user-friendly
+# Output:
 # "NQ07 0000 0000 0000 0000 0000 0000 0000 0000"
+```
+
+### New-Tx command
+
+Create and optionally sign transactions for Nimiq PoS.
+
+```sh
+# See usage instructions:
+nimiq_gleam new-tx --help
+
+# Create and optionally sign a transaction
+nimiq_gleam new-tx \
+  "NQ17 D2ES UBTP N14D RG4E 2KBK 217A 2GH2 NNY1" \
+  "NQ34 248H 248H 248H 248H 248H 248H 248H 248H" \
+  100000000 \
+  100000 \
+  --fee=138 \
+  --msg="Nimiq rocks\!" \
+  --sign-with=0000000000000000000000000000000000000000000000000000000000000000
+# Output:
+# 01689dae2f77b048dcc08e14d73104ea14222b5be1000011111111111111111111111111111111
+# 11111111000c4e696d697120726f636b73210000000005f5e100000000000000008a000186a005
+# 0062003b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da2900ae6c4c
+# 8bc8b3cbf2e96a1845e846bc65e5e9d60d9989746cb14e7f0b195d77ec48eaaf592dc3720ba2d0
+# 95fa7d15808c168b687cb0092e16f332f313ab45c609
 ```
 
 <!-- Further documentation can be found at <https://hexdocs.pm/nimiq_gleam>. -->
