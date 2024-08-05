@@ -8,8 +8,14 @@ import gleam/result
 import gleam/string
 import glint
 import glint/constraint
+import key/ed25519/private_key as ed25519_private_key
+import key/ed25519/public_key as ed25519_public_key
+import key/ed25519/signature as ed25519_signature
+import key/public_key.{EdDsaPublicKey}
+import key/signature.{EdDsaSignature}
 import snag
 import transaction/enums
+import transaction/signature_proof
 import transaction/transaction
 import utils/misc
 
@@ -40,6 +46,17 @@ fn network_flag() -> glint.Flag(Int) {
   )
 }
 
+fn private_key_flag() -> glint.Flag(String) {
+  glint.string_flag("sign-with")
+  |> glint.flag_help("Set the private key to sign the transaction with.")
+  |> glint.flag_constraint(fn(key: String) -> Result(String, snag.Snag) {
+    case bit_array.base16_decode(key) {
+      Ok(_) -> Ok(key)
+      Error(_) -> Error(snag.new("private key must be 32 bytes in hex format"))
+    }
+  })
+}
+
 pub fn run() -> glint.Command(Nil) {
   use <- glint.command_help("Creates Nimiq transactions")
 
@@ -50,6 +67,7 @@ pub fn run() -> glint.Command(Nil) {
   use msg <- glint.flag(msg_flag())
   use validity_start_height <- glint.named_arg("VALIDITY_START_HEIGHT")
   use network_id <- glint.flag(network_flag())
+  use private_key <- glint.flag(private_key_flag())
 
   use named, _, flags <- glint.command()
 
@@ -78,5 +96,30 @@ pub fn run() -> glint.Command(Nil) {
       None,
     )
 
-  tx |> transaction.to_hex() |> misc.unwrap() |> io.println
+  case private_key(flags) {
+    Error(_) -> tx
+    Ok(private_key) -> {
+      let assert Ok(private_key) = private_key |> ed25519_private_key.from_hex()
+
+      let public_key = ed25519_public_key.derive_key(private_key)
+
+      let signature =
+        ed25519_signature.create(
+          private_key,
+          public_key,
+          transaction.serialize_content(tx),
+        )
+
+      let proof =
+        signature_proof.single_sig(
+          EdDsaPublicKey(public_key),
+          EdDsaSignature(signature),
+        )
+
+      transaction.set_proof(tx, signature_proof.serialize(proof))
+    }
+  }
+  |> transaction.to_hex()
+  |> misc.unwrap()
+  |> io.println
 }
