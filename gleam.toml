@@ -1,5 +1,5 @@
 name = "nimiq_gleam"
-version = "0.3.0"
+version = "0.3.1"
 
 description = "Various modules and helpers for working with Nimiq primitives in the Gleam programming language or as a CLI"
 licences = ["Apache-2.0"]
