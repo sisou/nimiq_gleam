@@ -1,8 +1,9 @@
 import bindings/ed25519
 import gleam/bit_array
+import gleam/bytes_builder.{type BytesBuilder}
 import gleam/result
-import gleam/string
 import key/ed25519/private_key.{type PrivateKey}
+import utils/misc
 
 const size = 32
 
@@ -10,9 +11,9 @@ pub opaque type PublicKey {
   PublicKey(buf: BitArray)
 }
 
-pub fn derive_key(private_key: PrivateKey) -> PublicKey {
-  private_key
-  |> private_key.serialize()
+pub fn derive_key(private: PrivateKey) -> PublicKey {
+  private
+  |> private_key.serialize_to_bits()
   |> ed25519.derive_public_key()
   |> PublicKey()
 }
@@ -27,7 +28,7 @@ pub fn deserialize(buf: BitArray) -> Result(#(PublicKey, BitArray), String) {
 
 pub fn deserialize_all(buf: BitArray) -> Result(PublicKey, String) {
   case deserialize(buf) {
-    Ok(#(public_key, <<>>)) -> Ok(public_key)
+    Ok(#(key, <<>>)) -> Ok(key)
     Ok(_) -> Error("Invalid Ed25519 public key: trailing bytes")
     Error(err) -> Error(err)
   }
@@ -61,18 +62,22 @@ pub fn from_string(str: String) -> Result(PublicKey, String) {
   |> result.map_error(fn(_) { "Invalid public key: unknown format" })
 }
 
-pub fn serialize(public_key: PublicKey) -> BitArray {
-  public_key.buf
+pub fn serialize(builder: BytesBuilder, key: PublicKey) -> BytesBuilder {
+  builder |> bytes_builder.append(key.buf)
 }
 
-pub fn to_hex(public_key: PublicKey) -> String {
-  public_key |> serialize() |> bit_array.base16_encode() |> string.lowercase()
+pub fn serialize_to_bits(key: PublicKey) -> BitArray {
+  key.buf
 }
 
-pub fn to_base64(public_key: PublicKey) -> String {
-  public_key |> serialize() |> bit_array.base64_encode(True)
+pub fn to_hex(key: PublicKey) -> String {
+  key |> serialize_to_bits() |> misc.to_hex()
 }
 
-pub fn to_base64_url(public_key: PublicKey) -> String {
-  public_key |> serialize() |> bit_array.base64_url_encode(True)
+pub fn to_base64(key: PublicKey) -> String {
+  key |> serialize_to_bits() |> bit_array.base64_encode(True)
+}
+
+pub fn to_base64_url(key: PublicKey) -> String {
+  key |> serialize_to_bits() |> bit_array.base64_url_encode(True)
 }

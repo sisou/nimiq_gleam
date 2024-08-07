@@ -116,7 +116,7 @@ pub fn run() -> glint.Command(Nil) {
           EdDsaSignature(signature),
         )
 
-      transaction.set_proof(tx, signature_proof.serialize(proof))
+      transaction.set_signature_proof(tx, proof)
     }
   }
   |> transaction.to_hex()

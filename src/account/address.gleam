@@ -1,4 +1,5 @@
 import gleam/bit_array
+import gleam/bytes_builder.{type BytesBuilder}
 import gleam/float
 import gleam/int
 import gleam/list
@@ -101,20 +102,24 @@ pub fn from_string(str: String) -> Result(Address, String) {
   |> result.map_error(fn(_) { "Invalid address: unknown format" })
 }
 
-pub fn serialize(address: Address) -> BitArray {
+pub fn serialize(builder: BytesBuilder, address: Address) -> BytesBuilder {
+  builder |> bytes_builder.append(address.buf)
+}
+
+pub fn serialize_to_bits(address: Address) -> BitArray {
   address.buf
 }
 
 pub fn to_hex(address: Address) -> String {
-  address |> serialize() |> bit_array.base16_encode() |> string.lowercase()
+  address |> serialize_to_bits() |> misc.to_hex()
 }
 
 pub fn to_base64(address: Address) -> String {
-  address |> serialize() |> bit_array.base64_encode(True)
+  address |> serialize_to_bits() |> bit_array.base64_encode(True)
 }
 
 pub fn to_base64_url(address: Address) -> String {
-  address |> serialize() |> bit_array.base64_url_encode(True)
+  address |> serialize_to_bits() |> bit_array.base64_url_encode(True)
 }
 
 pub fn to_user_friendly_address(address: Address) -> String {

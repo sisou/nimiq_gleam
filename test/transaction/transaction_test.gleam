@@ -4,7 +4,6 @@ import coin.{Coin}
 import gleam/bit_array
 import gleam/option.{None}
 import gleam/result
-import gleam/string
 import gleeunit/should
 import key/ed25519/public_key as ed25519_public_key
 import key/ed25519/signature as ed25519_signature
@@ -14,6 +13,7 @@ import merkle/merkle_path
 import transaction/enums.{TestAlbatrossNetwork}
 import transaction/signature_proof.{SignatureProof}
 import transaction/transaction
+import utils/misc
 
 pub fn serialize_basic_test() {
   // Transaction data is from my explanation of Nimiq's transaction serialization at
@@ -65,9 +65,9 @@ pub fn serialize_basic_test() {
       webauthn_fields: None,
     )
 
-  let tx = transaction.set_proof(tx, signature_proof.serialize(proof))
+  let tx = transaction.set_signature_proof(tx, proof)
 
-  transaction.serialize(tx)
+  transaction.serialize_to_bits(tx)
   |> should.equal(
     Ok(<<
       0, 0, 59, 106, 39, 188, 206, 182, 164, 45, 98, 163, 168, 208, 42, 111, 13,
@@ -136,9 +136,9 @@ pub fn serialize_extended_test() {
       webauthn_fields: None,
     )
 
-  let tx = transaction.set_proof(tx, signature_proof.serialize(proof))
+  let tx = transaction.set_signature_proof(tx, proof)
 
-  transaction.serialize(tx)
+  transaction.serialize_to_bits(tx)
   |> should.equal(
     Ok(<<
       1, 104, 157, 174, 47, 119, 176, 72, 220, 192, 142, 20, 215, 49, 4, 234, 20,
@@ -185,9 +185,7 @@ pub fn deserialize_basic_test() {
   let assert 100_000 = tx.validity_start_height
   let assert TestAlbatrossNetwork = tx.network_id
   let assert "003b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da2900e97d14e5ab8b9e9b71f7d2952457810ff5c8c762ab92dded852eb915ed38e1f0c1332abced2a6dec66cc4cbfd025de9609712582872f94eabc67644b4d4f360e" =
-    tx.proof
-    |> bit_array.base16_encode()
-    |> string.lowercase()
+    tx.proof |> misc.to_hex()
 }
 
 pub fn deserialize_extended_test() {
@@ -221,7 +219,5 @@ pub fn deserialize_extended_test() {
   let assert 100_000 = tx.validity_start_height
   let assert TestAlbatrossNetwork = tx.network_id
   let assert "003b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da2900ae6c4c8bc8b3cbf2e96a1845e846bc65e5e9d60d9989746cb14e7f0b195d77ec48eaaf592dc3720ba2d095fa7d15808c168b687cb0092e16f332f313ab45c609" =
-    tx.proof
-    |> bit_array.base16_encode()
-    |> string.lowercase()
+    tx.proof |> misc.to_hex()
 }

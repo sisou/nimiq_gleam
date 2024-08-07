@@ -51,14 +51,17 @@ pub fn deserialize_all(buf: BitArray) -> Result(MerklePath, String) {
   }
 }
 
-pub fn serialize(path: MerklePath) -> BitArray {
-  bytes_builder.new()
+pub fn serialize(builder: BytesBuilder, path: MerklePath) -> BytesBuilder {
+  builder
   |> bytes_builder.append(<<list.length(path.nodes):8>>)
   |> bytes_builder.append(do_compress(path.nodes, bytes_builder.new(), 0))
   |> bytes_builder.append(
     path.nodes |> list.map(fn(node) { node.hash }) |> bit_array.concat(),
   )
-  |> bytes_builder.to_bit_array()
+}
+
+pub fn serialize_to_bits(path: MerklePath) -> BitArray {
+  bytes_builder.new() |> serialize(path) |> bytes_builder.to_bit_array()
 }
 
 fn deserialize_nodes(

@@ -1,11 +1,12 @@
 import gleam/bit_array
-import gleam/string
+import gleam/bytes_builder.{type BytesBuilder}
 import key/ed25519/private_key as ed25519_private_key
 import key/ed25519/public_key as ed25519_public_key
 import key/ed25519/signature as ed25519_signature
 import transaction/enums.{
   type SignatureProofAlgorithm, ES256Algorithm, Ed25519Algorithm,
 }
+import utils/misc
 
 pub type Signature {
   EdDsaSignature(sig: ed25519_signature.Signature)
@@ -46,21 +47,28 @@ fn deserialize_ecdsa(buf: BitArray) -> Result(#(Signature, BitArray), String) {
   }
 }
 
-pub fn serialize(signature: Signature) -> BitArray {
-  case signature {
-    EdDsaSignature(sig) -> ed25519_signature.serialize(sig)
+pub fn serialize(builder: BytesBuilder, sig: Signature) -> BytesBuilder {
+  case sig {
+    EdDsaSignature(sig) -> builder |> ed25519_signature.serialize(sig)
+    EcDsaSignature(buf) -> builder |> bytes_builder.append(buf)
+  }
+}
+
+pub fn serialize_to_bits(sig: Signature) -> BitArray {
+  case sig {
+    EdDsaSignature(sig) -> ed25519_signature.serialize_to_bits(sig)
     EcDsaSignature(buf) -> buf
   }
 }
 
-pub fn to_hex(signature: Signature) -> String {
-  signature |> serialize() |> bit_array.base16_encode() |> string.lowercase()
+pub fn to_hex(sig: Signature) -> String {
+  sig |> serialize_to_bits() |> misc.to_hex()
 }
 
-pub fn to_base64(signature: Signature) -> String {
-  signature |> serialize() |> bit_array.base64_encode(True)
+pub fn to_base64(sig: Signature) -> String {
+  sig |> serialize_to_bits() |> bit_array.base64_encode(True)
 }
 
-pub fn to_base64_url(signature: Signature) -> String {
-  signature |> serialize() |> bit_array.base64_url_encode(True)
+pub fn to_base64_url(sig: Signature) -> String {
+  sig |> serialize_to_bits() |> bit_array.base64_url_encode(True)
 }

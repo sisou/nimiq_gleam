@@ -1,7 +1,8 @@
 import bindings/ed25519
 import gleam/bit_array
+import gleam/bytes_builder.{type BytesBuilder}
 import gleam/result
-import gleam/string
+import utils/misc
 
 const size = 32
 
@@ -10,8 +11,8 @@ pub opaque type PrivateKey {
 }
 
 pub fn generate() -> PrivateKey {
-  let #(private_key, _) = ed25519.generate_key_pair()
-  PrivateKey(private_key)
+  let #(secret, _) = ed25519.generate_key_pair()
+  PrivateKey(secret)
 }
 
 pub fn deserialize(buf: BitArray) -> Result(#(PrivateKey, BitArray), String) {
@@ -24,7 +25,7 @@ pub fn deserialize(buf: BitArray) -> Result(#(PrivateKey, BitArray), String) {
 
 pub fn deserialize_all(buf: BitArray) -> Result(PrivateKey, String) {
   case deserialize(buf) {
-    Ok(#(private_key, <<>>)) -> Ok(private_key)
+    Ok(#(key, <<>>)) -> Ok(key)
     Ok(_) -> Error("Invalid public key: trailing bytes")
     Error(err) -> Error(err)
   }
@@ -58,18 +59,22 @@ pub fn from_string(str: String) -> Result(PrivateKey, String) {
   |> result.map_error(fn(_) { "Invalid private key: unknown format" })
 }
 
-pub fn serialize(private_key: PrivateKey) -> BitArray {
-  private_key.buf
+pub fn serialize(builder: BytesBuilder, key: PrivateKey) -> BytesBuilder {
+  builder |> bytes_builder.append(key.buf)
 }
 
-pub fn to_hex(private_key: PrivateKey) -> String {
-  private_key |> serialize() |> bit_array.base16_encode() |> string.lowercase()
+pub fn serialize_to_bits(key: PrivateKey) -> BitArray {
+  key.buf
 }
 
-pub fn to_base64(private_key: PrivateKey) -> String {
-  private_key |> serialize() |> bit_array.base64_encode(True)
+pub fn to_hex(key: PrivateKey) -> String {
+  key |> serialize_to_bits() |> misc.to_hex()
 }
 
-pub fn to_base64_url(private_key: PrivateKey) -> String {
-  private_key |> serialize() |> bit_array.base64_url_encode(True)
+pub fn to_base64(key: PrivateKey) -> String {
+  key |> serialize_to_bits() |> bit_array.base64_encode(True)
+}
+
+pub fn to_base64_url(key: PrivateKey) -> String {
+  key |> serialize_to_bits() |> bit_array.base64_url_encode(True)
 }

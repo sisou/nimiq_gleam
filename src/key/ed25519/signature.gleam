@@ -1,9 +1,10 @@
 import bindings/ed25519
 import gleam/bit_array
+import gleam/bytes_builder.{type BytesBuilder}
 import gleam/result
-import gleam/string
 import key/ed25519/private_key.{type PrivateKey}
 import key/ed25519/public_key.{type PublicKey}
+import utils/misc
 
 pub const size = 64
 
@@ -18,8 +19,8 @@ pub fn create(
 ) -> Signature {
   Signature(ed25519.signature(
     data,
-    private_key.serialize(private),
-    public_key.serialize(public),
+    private_key.serialize_to_bits(private),
+    public_key.serialize_to_bits(public),
   ))
 }
 
@@ -33,7 +34,7 @@ pub fn deserialize(buf: BitArray) -> Result(#(Signature, BitArray), String) {
 
 pub fn deserialize_all(buf: BitArray) -> Result(Signature, String) {
   case deserialize(buf) {
-    Ok(#(signature, <<>>)) -> Ok(signature)
+    Ok(#(sig, <<>>)) -> Ok(sig)
     Ok(_) -> Error("Invalid signature: trailing bytes")
     Error(err) -> Error(err)
   }
@@ -67,18 +68,22 @@ pub fn from_string(str: String) -> Result(Signature, String) {
   |> result.map_error(fn(_) { "Invalid signature: unknown format" })
 }
 
-pub fn serialize(signature: Signature) -> BitArray {
-  signature.buf
+pub fn serialize(builder: BytesBuilder, sig: Signature) -> BytesBuilder {
+  builder |> bytes_builder.append(sig.buf)
 }
 
-pub fn to_hex(signature: Signature) -> String {
-  signature |> serialize() |> bit_array.base16_encode() |> string.lowercase()
+pub fn serialize_to_bits(sig: Signature) -> BitArray {
+  sig.buf
 }
 
-pub fn to_base64(signature: Signature) -> String {
-  signature |> serialize() |> bit_array.base64_encode(True)
+pub fn to_hex(sig: Signature) -> String {
+  sig |> serialize_to_bits() |> misc.to_hex()
 }
 
-pub fn to_base64_url(signature: Signature) -> String {
-  signature |> serialize() |> bit_array.base64_url_encode(True)
+pub fn to_base64(sig: Signature) -> String {
+  sig |> serialize_to_bits() |> bit_array.base64_encode(True)
+}
+
+pub fn to_base64_url(sig: Signature) -> String {
+  sig |> serialize_to_bits() |> bit_array.base64_url_encode(True)
 }
