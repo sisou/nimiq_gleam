@@ -9,7 +9,7 @@ import key/ed25519/public_key as ed25519_public_key
 import key/ed25519/signature as ed25519_signature
 import key/public_key.{EcDsaPublicKey, EdDsaPublicKey}
 import key/signature.{EcDsaSignature, EdDsaSignature}
-import transaction/enums.{TestAlbatrossNetwork}
+import transaction/network_id
 import transaction/signature_proof.{WebauthnFields}
 import transaction/transaction
 import utils/misc
@@ -33,7 +33,7 @@ pub fn basic_signature_proof_test() {
       Coin(100_000_000),
       Coin(138),
       100_000,
-      TestAlbatrossNetwork,
+      network_id.TestAlbatross,
       None,
     )
 

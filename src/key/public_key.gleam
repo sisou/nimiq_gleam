@@ -3,9 +3,7 @@ import bindings/blake2
 import gleam/bit_array
 import gleam/bytes_builder.{type BytesBuilder}
 import key/ed25519/public_key as ed25519_public_key
-import transaction/enums.{
-  type SignatureProofAlgorithm, ES256Algorithm, Ed25519Algorithm,
-}
+import transaction/signature_proof_algorithm.{type SignatureProofAlgorithm}
 import utils/misc
 
 pub type PublicKey {
@@ -18,8 +16,8 @@ pub fn deserialize_typed(
   typ: SignatureProofAlgorithm,
 ) -> Result(#(PublicKey, BitArray), String) {
   case typ {
-    Ed25519Algorithm -> deserialize_eddsa(buf)
-    ES256Algorithm -> deserialize_ecdsa(buf)
+    signature_proof_algorithm.Ed25519 -> deserialize_eddsa(buf)
+    signature_proof_algorithm.ES256 -> deserialize_ecdsa(buf)
   }
 }
 

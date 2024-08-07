@@ -14,7 +14,7 @@ import key/ed25519/signature as ed25519_signature
 import key/public_key.{EdDsaPublicKey}
 import key/signature.{EdDsaSignature}
 import snag
-import transaction/enums
+import transaction/network_id
 import transaction/signature_proof
 import transaction/transaction
 import utils/misc
@@ -81,7 +81,7 @@ pub fn run() -> glint.Command(Nil) {
     validity_start_height(named) |> int.parse()
   let assert Ok(network_id) =
     network_id(flags)
-    |> result.map(fn(num) { enums.to_network_id(num) |> misc.unwrap() })
+    |> result.map(fn(num) { network_id.from_int(num) |> misc.unwrap() })
 
   // Business logic of the command
   let tx =

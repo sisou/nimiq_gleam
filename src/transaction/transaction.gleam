@@ -1,4 +1,4 @@
-import account/account.{type AccountType, BasicAccount}
+import account/account_type.{type AccountType}
 import account/address.{type Address}
 import coin.{type Coin, Coin}
 import gleam/bit_array
@@ -8,11 +8,11 @@ import gleam/option.{type Option, None, Some}
 import gleam/result
 import key/public_key
 import key/signature
-import transaction/enums.{
-  type NetworkId, type TransactionFormat, BasicFormat, ExtendedFormat,
-}
-import transaction/flags.{type TransactionFlags, WebauthnFieldsFlag}
+import transaction/network_id.{type NetworkId}
 import transaction/signature_proof.{type SignatureProof}
+import transaction/signature_proof_flags
+import transaction/transaction_flags.{type TransactionFlags}
+import transaction/transaction_format.{type TransactionFormat}
 import utils/misc
 import utils/serde
 
@@ -44,10 +44,10 @@ pub fn new_basic(
 ) -> Transaction {
   Transaction(
     sender,
-    BasicAccount,
+    account_type.Basic,
     <<>>,
     recipient,
-    BasicAccount,
+    account_type.Basic,
     <<>>,
     value,
     fee,
@@ -70,10 +70,10 @@ pub fn new_basic_with_data(
 ) -> Transaction {
   Transaction(
     sender,
-    BasicAccount,
+    account_type.Basic,
     <<>>,
     recipient,
-    BasicAccount,
+    account_type.Basic,
     data,
     value,
     fee,
@@ -88,7 +88,7 @@ pub fn deserialize(buf: BitArray) -> Result(#(Transaction, BitArray), String) {
   use #(format, rest) <- result.try(deserialize_format(buf))
 
   case format {
-    BasicFormat -> {
+    transaction_format.Basic -> {
       use #(#(signature_alg, flags), rest) <- result.try(
         signature_proof.deserialize_type_and_flags_byte(rest),
       )
@@ -109,7 +109,7 @@ pub fn deserialize(buf: BitArray) -> Result(#(Transaction, BitArray), String) {
         signature_alg,
       ))
       use #(webauthn_fields, rest) <- result.try(case flags {
-        Some(WebauthnFieldsFlag) ->
+        Some(signature_proof_flags.WebauthnFields) ->
           signature_proof.deserialize_webauthn_fields(rest)
           |> result.map(fn(tuple) {
             let #(fields, rest) = tuple
@@ -118,7 +118,7 @@ pub fn deserialize(buf: BitArray) -> Result(#(Transaction, BitArray), String) {
         None -> Ok(#(None, rest))
       })
 
-      use network_id <- result.try(enums.to_network_id(network_id))
+      use network_id <- result.try(network_id.from_int(network_id))
 
       let proof =
         case webauthn_fields {
@@ -131,10 +131,10 @@ pub fn deserialize(buf: BitArray) -> Result(#(Transaction, BitArray), String) {
       let tx =
         Transaction(
           public_key.to_address(public_key),
-          BasicAccount,
+          account_type.Basic,
           <<>>,
           recipient,
-          BasicAccount,
+          account_type.Basic,
           <<>>,
           Coin(value),
           Coin(fee),
@@ -146,7 +146,7 @@ pub fn deserialize(buf: BitArray) -> Result(#(Transaction, BitArray), String) {
 
       Ok(#(tx, rest))
     }
-    ExtendedFormat -> {
+    transaction_format.Extended -> {
       use #(sender, rest) <- result.try(address.deserialize(rest))
       use #(sender_type, rest) <- result.try(serde.deserialize_int(rest, 8))
       use #(sender_data, rest) <- result.try(serde.deserialize_bytes(rest))
@@ -163,10 +163,10 @@ pub fn deserialize(buf: BitArray) -> Result(#(Transaction, BitArray), String) {
       use #(flags, rest) <- result.try(serde.deserialize_int(rest, 8))
       use #(proof, rest) <- result.try(serde.deserialize_bytes(rest))
 
-      use network_id <- result.try(enums.to_network_id(network_id))
-      use sender_type <- result.try(account.to_account_type(sender_type))
-      use recipient_type <- result.try(account.to_account_type(recipient_type))
-      use flags <- result.try(flags.to_transaction_flags(flags))
+      use network_id <- result.try(network_id.from_int(network_id))
+      use sender_type <- result.try(account_type.from_int(sender_type))
+      use recipient_type <- result.try(account_type.from_int(recipient_type))
+      use flags <- result.try(transaction_flags.from_int(flags))
 
       let tx =
         Transaction(
@@ -202,7 +202,7 @@ fn deserialize_format(
 ) -> Result(#(TransactionFormat, BitArray), String) {
   case buf {
     <<byte:8, rest:bits>> -> {
-      case enums.to_transaction_format(byte) {
+      case transaction_format.from_int(byte) {
         Ok(format) -> Ok(#(format, rest))
         Error(err) -> Error(err)
       }
@@ -231,8 +231,8 @@ pub fn set_signature_proof(
 
 pub fn format(tx: Transaction) -> TransactionFormat {
   case
-    tx.sender_type == BasicAccount
-    && tx.recipient_type == BasicAccount
+    tx.sender_type == account_type.Basic
+    && tx.recipient_type == account_type.Basic
     && tx.recipient_data == <<>>
     && tx.flags == None
     && case signature_proof.deserialize_all(tx.proof) {
@@ -243,8 +243,8 @@ pub fn format(tx: Transaction) -> TransactionFormat {
       Error(_) -> False
     }
   {
-    True -> BasicFormat
-    False -> ExtendedFormat
+    True -> transaction_format.Basic
+    False -> transaction_format.Extended
   }
 }
 
@@ -257,11 +257,11 @@ pub fn serialize_content(tx: Transaction) -> BitArray {
   // Sender address
   |> address.serialize(tx.sender)
   // Sender account type
-  |> bytes_builder.append(<<account.from_account_type(tx.sender_type):8>>)
+  |> bytes_builder.append(<<account_type.to_int(tx.sender_type):8>>)
   // Recipient address
   |> address.serialize(tx.recipient)
   // Recipient account type
-  |> bytes_builder.append(<<account.from_account_type(tx.recipient_type):8>>)
+  |> bytes_builder.append(<<account_type.to_int(tx.recipient_type):8>>)
   // Value
   |> bytes_builder.append(<<tx.value.luna:64>>)
   // Fee
@@ -269,9 +269,9 @@ pub fn serialize_content(tx: Transaction) -> BitArray {
   // Validity start height
   |> bytes_builder.append(<<tx.validity_start_height:32>>)
   // Network ID
-  |> bytes_builder.append(<<enums.from_network_id(tx.network_id):8>>)
+  |> bytes_builder.append(<<network_id.to_int(tx.network_id):8>>)
   // Flags
-  |> bytes_builder.append(<<flags.from_transaction_flags(tx.flags):8>>)
+  |> bytes_builder.append(<<transaction_flags.to_int(tx.flags):8>>)
   // Sender data
   |> serde.serialize_bytes(tx.sender_data)
   // Convert to bit array
@@ -286,10 +286,10 @@ pub fn serialize(
 
   let builder =
     builder
-    |> bytes_builder.append(<<enums.from_transaction_format(format):8>>)
+    |> bytes_builder.append(<<transaction_format.to_int(format):8>>)
 
   case format {
-    BasicFormat -> {
+    transaction_format.Basic -> {
       use signature_proof <- result.try(
         tx.proof |> signature_proof.deserialize_all(),
       )
@@ -310,7 +310,7 @@ pub fn serialize(
         // Validity start height
         |> bytes_builder.append(<<tx.validity_start_height:32>>)
         // Network ID
-        |> bytes_builder.append(<<enums.from_network_id(tx.network_id):8>>)
+        |> bytes_builder.append(<<network_id.to_int(tx.network_id):8>>)
         // Signature
         |> signature.serialize(signature_proof.signature)
 
@@ -322,19 +322,19 @@ pub fn serialize(
       }
       |> Ok()
     }
-    ExtendedFormat -> {
+    transaction_format.Extended -> {
       builder
       |> address.serialize(tx.sender)
-      |> bytes_builder.append(<<account.from_account_type(tx.sender_type):8>>)
+      |> bytes_builder.append(<<account_type.to_int(tx.sender_type):8>>)
       |> serde.serialize_bytes(tx.sender_data)
       |> address.serialize(tx.recipient)
-      |> bytes_builder.append(<<account.from_account_type(tx.recipient_type):8>>)
+      |> bytes_builder.append(<<account_type.to_int(tx.recipient_type):8>>)
       |> serde.serialize_bytes(tx.recipient_data)
       |> bytes_builder.append(<<tx.value.luna:64>>)
       |> bytes_builder.append(<<tx.fee.luna:64>>)
       |> bytes_builder.append(<<tx.validity_start_height:32>>)
-      |> bytes_builder.append(<<enums.from_network_id(tx.network_id):8>>)
-      |> bytes_builder.append(<<flags.from_transaction_flags(tx.flags):8>>)
+      |> bytes_builder.append(<<network_id.to_int(tx.network_id):8>>)
+      |> bytes_builder.append(<<transaction_flags.to_int(tx.flags):8>>)
       |> serde.serialize_bytes(tx.proof)
       |> Ok()
     }

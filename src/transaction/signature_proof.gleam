@@ -5,10 +5,8 @@ import gleam/result
 import key/public_key.{type PublicKey, EcDsaPublicKey, EdDsaPublicKey}
 import key/signature.{type Signature}
 import merkle/merkle_path.{type MerklePath}
-import transaction/enums.{
-  type SignatureProofAlgorithm, ES256Algorithm, Ed25519Algorithm,
-}
-import transaction/flags.{type SignatureProofFlags, WebauthnFieldsFlag}
+import transaction/signature_proof_algorithm.{type SignatureProofAlgorithm}
+import transaction/signature_proof_flags.{type SignatureProofFlags}
 import utils/serde
 
 pub type SignatureProof {
@@ -63,7 +61,7 @@ pub fn deserialize(buf: BitArray) -> Result(#(SignatureProof, BitArray), String)
   case flags {
     None ->
       Ok(#(SignatureProof(public_key, merkle_path, signature, None), rest))
-    Some(WebauthnFieldsFlag) -> {
+    Some(signature_proof_flags.WebauthnFields) -> {
       use #(fields, rest) <- result.try(deserialize_webauthn_fields(rest))
       Ok(#(
         SignatureProof(public_key, merkle_path, signature, Some(fields)),
@@ -85,10 +83,10 @@ pub fn parse_type_and_flags_byte(
   byte: Int,
 ) -> Result(#(SignatureProofAlgorithm, Option(SignatureProofFlags)), String) {
   use signature_alg <- result.try(
-    int.bitwise_and(byte, 0b1111) |> enums.to_signature_algorithm(),
+    int.bitwise_and(byte, 0b1111) |> signature_proof_algorithm.from_int(),
   )
   use flags <- result.try(
-    int.bitwise_shift_right(byte, 4) |> flags.to_signature_proof_flags(),
+    int.bitwise_shift_right(byte, 4) |> signature_proof_flags.from_int(),
   )
   Ok(#(signature_alg, flags))
 }
@@ -96,17 +94,17 @@ pub fn parse_type_and_flags_byte(
 pub fn make_type_and_flags_byte(proof: SignatureProof) -> Int {
   let signature_alg =
     case proof.public_key {
-      EdDsaPublicKey(_) -> Ed25519Algorithm
-      EcDsaPublicKey(_) -> ES256Algorithm
+      EdDsaPublicKey(_) -> signature_proof_algorithm.Ed25519
+      EcDsaPublicKey(_) -> signature_proof_algorithm.ES256
     }
-    |> enums.from_signature_algorithm()
+    |> signature_proof_algorithm.to_int()
 
   let flags =
     case proof.webauthn_fields {
       None -> None
-      Some(_) -> Some(WebauthnFieldsFlag)
+      Some(_) -> Some(signature_proof_flags.WebauthnFields)
     }
-    |> flags.from_signature_proof_flags()
+    |> signature_proof_flags.to_int()
 
   int.bitwise_or(int.bitwise_shift_left(flags, 4), signature_alg)
 }

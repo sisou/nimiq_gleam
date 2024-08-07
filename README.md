@@ -55,7 +55,7 @@ import nimiq_gleam/key/ed25519/public_key as ed25519_public_key
 import nimiq_gleam/key/ed25519/signature as ed25519_signature
 import nimiq_gleam/key/public_key.{EdDsaPublicKey}
 import nimiq_gleam/key/signature.{EdDsaSignature}
-import nimiq_gleam/transaction/enums.{TestAlbatrossNetwork}
+import nimiq_gleam/transaction/network_id
 import nimiq_gleam/transaction/signature_proof
 import nimiq_gleam/transaction/transaction
 
@@ -74,7 +74,7 @@ let tx =
     Coin(100_000_000), // Value in luna
     Coin(138), // Fee in luna
     100_000, // Validity start height
-    TestAlbatrossNetwork, // Network ID
+    network_id.TestAlbatross, // Network ID
     None, // Flags
   )
 

@@ -1,4 +1,4 @@
-import account/account.{BasicAccount}
+import account/account_type
 import account/address
 import coin.{Coin}
 import gleam/bit_array
@@ -10,7 +10,7 @@ import key/ed25519/signature as ed25519_signature
 import key/public_key.{EdDsaPublicKey}
 import key/signature.{EdDsaSignature}
 import merkle/merkle_path
-import transaction/enums.{TestAlbatrossNetwork}
+import transaction/network_id
 import transaction/signature_proof.{SignatureProof}
 import transaction/transaction
 import utils/misc
@@ -34,7 +34,7 @@ pub fn serialize_basic_test() {
       Coin(100_000_000),
       Coin(138),
       100_000,
-      TestAlbatrossNetwork,
+      network_id.TestAlbatross,
       None,
     )
 
@@ -104,7 +104,7 @@ pub fn serialize_extended_test() {
       Coin(100_000_000),
       Coin(138),
       100_000,
-      TestAlbatrossNetwork,
+      network_id.TestAlbatross,
       None,
     )
 
@@ -173,17 +173,17 @@ pub fn deserialize_basic_test() {
   let assert "NQ17 D2ES UBTP N14D RG4E 2KBK 217A 2GH2 NNY1" =
     tx.sender
     |> address.to_user_friendly_address()
-  let assert BasicAccount = tx.sender_type
+  should.equal(account_type.Basic, tx.sender_type)
   let assert <<>> = tx.sender_data
   let assert "NQ34 248H 248H 248H 248H 248H 248H 248H 248H" =
     tx.recipient
     |> address.to_user_friendly_address()
-  let assert BasicAccount = tx.recipient_type
+  should.equal(account_type.Basic, tx.recipient_type)
   let assert <<>> = tx.recipient_data
   let assert Coin(100_000_000) = tx.value
   let assert Coin(138) = tx.fee
   let assert 100_000 = tx.validity_start_height
-  let assert TestAlbatrossNetwork = tx.network_id
+  let assert network_id.TestAlbatross = tx.network_id
   let assert "003b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da2900e97d14e5ab8b9e9b71f7d2952457810ff5c8c762ab92dded852eb915ed38e1f0c1332abced2a6dec66cc4cbfd025de9609712582872f94eabc67644b4d4f360e" =
     tx.proof |> misc.to_hex()
 }
@@ -207,17 +207,17 @@ pub fn deserialize_extended_test() {
   let assert "NQ17 D2ES UBTP N14D RG4E 2KBK 217A 2GH2 NNY1" =
     tx.sender
     |> address.to_user_friendly_address()
-  let assert BasicAccount = tx.sender_type
+  should.equal(account_type.Basic, tx.sender_type)
   let assert <<>> = tx.sender_data
   let assert "NQ34 248H 248H 248H 248H 248H 248H 248H 248H" =
     tx.recipient
     |> address.to_user_friendly_address()
-  let assert BasicAccount = tx.recipient_type
+  should.equal(account_type.Basic, tx.recipient_type)
   let assert Ok("Nimiq rocks!") = tx.recipient_data |> bit_array.to_string()
   let assert Coin(100_000_000) = tx.value
   let assert Coin(138) = tx.fee
   let assert 100_000 = tx.validity_start_height
-  let assert TestAlbatrossNetwork = tx.network_id
+  let assert network_id.TestAlbatross = tx.network_id
   let assert "003b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da2900ae6c4c8bc8b3cbf2e96a1845e846bc65e5e9d60d9989746cb14e7f0b195d77ec48eaaf592dc3720ba2d095fa7d15808c168b687cb0092e16f332f313ab45c609" =
     tx.proof |> misc.to_hex()
 }
