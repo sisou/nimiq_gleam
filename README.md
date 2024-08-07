@@ -59,15 +59,15 @@ import nimiq_gleam/transaction/enums.{TestAlbatrossNetwork}
 import nimiq_gleam/transaction/signature_proof
 import nimiq_gleam/transaction/transaction
 
+let assert Ok(sender) =
+  "NQ17 D2ES UBTP N14D RG4E 2KBK 217A 2GH2 NNY1"
+  |> address.from_user_friendly_address()
+
+let assert Ok(recipient) =
+  "NQ34 248H 248H 248H 248H 248H 248H 248H 248H"
+  |> address.from_user_friendly_address()
+
 let tx =
-  let assert Ok(sender) =
-    "NQ17 D2ES UBTP N14D RG4E 2KBK 217A 2GH2 NNY1"
-    |> address.from_user_friendly_address()
-
-  let assert Ok(recipient) =
-    "NQ34 248H 248H 248H 248H 248H 248H 248H 248H"
-    |> address.from_user_friendly_address()
-
   transaction.new_basic(
     sender,
     recipient,
@@ -96,10 +96,7 @@ let proof = signature_proof.single_sig(
 )
 
 // Add proof to transaction
-let tx =
-  proof
-  |> signature_proof.serialize()
-  |> transaction.set_proof(tx, _)
+let tx = transaction.set_signature_proof(tx, proof)
 
 // Print the serialized transaction as a hex string
 io.println(transaction.to_hex(tx))
