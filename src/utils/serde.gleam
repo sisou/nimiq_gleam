@@ -1,4 +1,5 @@
 import bindings/varint
+import coin.{type Coin, Coin}
 import gleam/bit_array
 import gleam/bool
 import gleam/bytes_builder.{type BytesBuilder}
@@ -17,6 +18,20 @@ pub fn deserialize_bytes(buf: BitArray) -> Result(#(BitArray, BitArray), String)
   case rest {
     <<data:unit(8)-size(len)-bytes, rest:bits>> -> Ok(#(data, rest))
     _ -> Error("Invalid bytes: out of data")
+  }
+}
+
+pub fn serialize_bitarray(buf: BytesBuilder, data: BitArray) -> BytesBuilder {
+  buf |> bytes_builder.append(data)
+}
+
+pub fn deserialize_bitarray(
+  buf: BitArray,
+  length: Int,
+) -> Result(#(BitArray, BitArray), String) {
+  case buf {
+    <<data:unit(8)-size(length)-bytes, rest:bits>> -> Ok(#(data, rest))
+    _ -> Error("Invalid bitarray: out of data")
   }
 }
 
@@ -53,6 +68,17 @@ pub fn deserialize_int(
   case buf {
     <<num:size(bit_size), rest:bits>> -> Ok(#(num, rest))
     _ -> Error("Invalid number: out of data")
+  }
+}
+
+pub fn serialize_coin(buf: BytesBuilder, coin: Coin) -> BytesBuilder {
+  serialize_int(buf, coin.luna, 64)
+}
+
+pub fn deserialize_coin(buf: BitArray) -> Result(#(Coin, BitArray), String) {
+  case buf {
+    <<luna:64, rest:bits>> -> Ok(#(Coin(luna), rest))
+    _ -> Error("Invalid coin: out of data")
   }
 }
 
