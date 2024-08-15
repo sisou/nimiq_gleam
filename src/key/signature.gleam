@@ -19,6 +19,10 @@ pub fn create(
   ed25519_signature.create(private, public, data) |> EdDsaSignature
 }
 
+pub fn default() -> Signature {
+  EdDsaSignature(ed25519_signature.default())
+}
+
 pub fn deserialize_typed(
   buf: BitArray,
   typ: SignatureProofAlgorithm,

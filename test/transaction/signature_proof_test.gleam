@@ -12,6 +12,7 @@ import key/signature.{EcDsaSignature, EdDsaSignature}
 import transaction/network_id
 import transaction/signature_proof.{WebauthnFields}
 import transaction/transaction
+import transaction/transaction_builder
 import utils/misc
 
 pub fn basic_signature_proof_test() {
@@ -27,7 +28,7 @@ pub fn basic_signature_proof_test() {
     |> address.from_user_friendly_address()
 
   let tx =
-    transaction.new_basic(
+    transaction_builder.new_basic(
       sender,
       recipient,
       Coin(100_000_000),

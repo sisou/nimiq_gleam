@@ -11,6 +11,10 @@ pub type PublicKey {
   EcDsaPublicKey(buf: BitArray)
 }
 
+pub fn default() -> PublicKey {
+  EdDsaPublicKey(ed25519_public_key.default())
+}
+
 pub fn deserialize_typed(
   buf: BitArray,
   typ: SignatureProofAlgorithm,

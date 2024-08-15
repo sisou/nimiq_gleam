@@ -33,57 +33,6 @@ pub type Transaction {
   )
 }
 
-pub fn new_basic(
-  sender: Address,
-  recipient: Address,
-  value: Coin,
-  fee: Coin,
-  validity_start_height: Int,
-  network_id: NetworkId,
-  proof: Option(BitArray),
-) -> Transaction {
-  Transaction(
-    sender,
-    account_type.Basic,
-    <<>>,
-    recipient,
-    account_type.Basic,
-    <<>>,
-    value,
-    fee,
-    validity_start_height,
-    network_id,
-    None,
-    option.unwrap(proof, <<>>),
-  )
-}
-
-pub fn new_basic_with_data(
-  sender: Address,
-  recipient: Address,
-  data: BitArray,
-  value: Coin,
-  fee: Coin,
-  validity_start_height: Int,
-  network_id: NetworkId,
-  proof: Option(BitArray),
-) -> Transaction {
-  Transaction(
-    sender,
-    account_type.Basic,
-    <<>>,
-    recipient,
-    account_type.Basic,
-    data,
-    value,
-    fee,
-    validity_start_height,
-    network_id,
-    None,
-    option.unwrap(proof, <<>>),
-  )
-}
-
 pub fn deserialize(buf: BitArray) -> Result(#(Transaction, BitArray), String) {
   use #(format, rest) <- result.try(deserialize_format(buf))
 

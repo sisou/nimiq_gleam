@@ -133,3 +133,11 @@ pub fn from_public_key_test() {
   |> address.to_user_friendly_address()
   |> should.equal(dummy.address)
 }
+
+pub fn zero_test() {
+  let assert "NQ07 0000 0000 0000 0000 0000 0000 0000 0000" =
+    address.zero() |> address.to_user_friendly_address()
+
+  let assert "NQ77 0000 0000 0000 0000 0000 0000 0000 0001" =
+    address.staking_contract() |> address.to_user_friendly_address()
+}

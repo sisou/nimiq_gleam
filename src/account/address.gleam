@@ -22,6 +22,10 @@ pub fn zero() -> Address {
   Address(<<0:unit(8)-size(size)>>)
 }
 
+pub fn staking_contract() -> Address {
+  Address(<<1:unit(8)-size(size)>>)
+}
+
 pub fn deserialize(buf: BitArray) -> Result(#(Address, BitArray), String) {
   case buf {
     <<bytes:unit(8)-size(size)-bytes, rest:bits>> -> Ok(#(Address(bytes), rest))

@@ -18,6 +18,10 @@ pub fn derive_key(private: PrivateKey) -> PublicKey {
   |> PublicKey()
 }
 
+pub fn default() -> PublicKey {
+  PublicKey(<<0:unit(8)-size(size)>>)
+}
+
 pub fn deserialize(buf: BitArray) -> Result(#(PublicKey, BitArray), String) {
   case buf {
     <<bytes:unit(8)-size(size)-bytes, rest:bits>> ->

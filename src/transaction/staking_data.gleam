@@ -1,6 +1,7 @@
 import account/address.{type Address}
 import coin.{type Coin}
 import gleam/bytes_builder.{type BytesBuilder}
+import gleam/int
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import key/ed25519/public_key.{type PublicKey as Ed25519PublicKey}
@@ -19,7 +20,7 @@ pub type BlsPublicKey =
 pub type BlsSignature =
   BitArray
 
-pub type StakingData {
+pub type IncomingStakingData {
   CreateValidator(
     signing_key: Ed25519PublicKey,
     voting_key: BlsPublicKey,
@@ -63,7 +64,9 @@ pub type StakingData {
   RetireStake(retire_stake: Coin, proof: SignatureProof)
 }
 
-pub fn deserialize(buf: BitArray) -> Result(#(StakingData, BitArray), String) {
+pub fn deserialize(
+  buf: BitArray,
+) -> Result(#(IncomingStakingData, BitArray), String) {
   use #(format, rest) <- result.try(serde.deserialize_int(buf, 8))
   case format {
     0 -> {
@@ -245,7 +248,7 @@ pub fn deserialize(buf: BitArray) -> Result(#(StakingData, BitArray), String) {
   }
 }
 
-pub fn deserialize_all(buf: BitArray) -> Result(StakingData, String) {
+pub fn deserialize_all(buf: BitArray) -> Result(IncomingStakingData, String) {
   case deserialize(buf) {
     Ok(#(data, <<>>)) -> Ok(data)
     Ok(_) -> Error("Invalid staking data: trailing bytes")
@@ -253,7 +256,10 @@ pub fn deserialize_all(buf: BitArray) -> Result(StakingData, String) {
   }
 }
 
-pub fn serialize(builder: BytesBuilder, data: StakingData) -> BytesBuilder {
+pub fn serialize(
+  builder: BytesBuilder,
+  data: IncomingStakingData,
+) -> BytesBuilder {
   case data {
     CreateValidator(
       signing_key,
@@ -389,10 +395,30 @@ pub fn serialize(builder: BytesBuilder, data: StakingData) -> BytesBuilder {
   }
 }
 
-pub fn serialize_to_bits(data: StakingData) -> BitArray {
+pub fn serialize_to_bits(data: IncomingStakingData) -> BitArray {
   bytes_builder.new() |> serialize(data) |> bytes_builder.to_bit_array()
 }
 
-pub fn to_hex(data: StakingData) -> String {
+pub fn to_hex(data: IncomingStakingData) -> String {
   data |> serialize_to_bits() |> misc.to_hex()
+}
+
+pub type OutgoingStakingData {
+  DeleteValidator
+  RemoveStake
+}
+
+pub fn to_int(data: OutgoingStakingData) -> Int {
+  case data {
+    DeleteValidator -> 0
+    RemoveStake -> 1
+  }
+}
+
+pub fn from_int(value: Int) -> Result(OutgoingStakingData, String) {
+  case value {
+    0 -> Ok(DeleteValidator)
+    1 -> Ok(RemoveStake)
+    _ -> Error("Invalid outgoing staking data: " <> int.to_string(value))
+  }
 }

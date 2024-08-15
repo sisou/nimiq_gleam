@@ -9,6 +9,10 @@ pub type Coin {
   Coin(luna: Int)
 }
 
+pub fn zero() -> Coin {
+  Coin(0)
+}
+
 pub fn lunas_to_coins(lunas: Coin) -> Float {
   int.to_float(lunas.luna) /. lunas_per_coin
 }

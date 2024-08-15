@@ -24,6 +24,10 @@ pub fn create(
   ))
 }
 
+pub fn default() -> Signature {
+  Signature(<<0:unit(8)-size(size)>>)
+}
+
 pub fn deserialize(buf: BitArray) -> Result(#(Signature, BitArray), String) {
   case buf {
     <<bytes:unit(8)-size(size)-bytes, rest:bits>> ->

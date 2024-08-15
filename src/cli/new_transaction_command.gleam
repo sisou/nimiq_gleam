@@ -17,6 +17,7 @@ import snag
 import transaction/network_id
 import transaction/signature_proof
 import transaction/transaction
+import transaction/transaction_builder
 import utils/misc
 
 fn fee_flag() -> glint.Flag(Int) {
@@ -85,7 +86,7 @@ pub fn run() -> glint.Command(Nil) {
 
   // Business logic of the command
   let tx =
-    transaction.new_basic_with_data(
+    transaction_builder.new_basic_with_data(
       sender,
       recipient,
       data,

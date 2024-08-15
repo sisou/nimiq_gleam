@@ -13,6 +13,7 @@ import merkle/merkle_path
 import transaction/network_id
 import transaction/signature_proof.{SignatureProof}
 import transaction/transaction
+import transaction/transaction_builder
 import utils/misc
 
 pub fn serialize_basic_test() {
@@ -28,7 +29,7 @@ pub fn serialize_basic_test() {
     |> address.from_user_friendly_address()
 
   let tx =
-    transaction.new_basic(
+    transaction_builder.new_basic(
       sender,
       recipient,
       Coin(100_000_000),
@@ -97,7 +98,7 @@ pub fn serialize_extended_test() {
     |> address.from_user_friendly_address()
 
   let tx =
-    transaction.new_basic_with_data(
+    transaction_builder.new_basic_with_data(
       sender,
       recipient,
       bit_array.from_string("Nimiq rocks!"),

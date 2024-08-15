@@ -45,6 +45,15 @@ pub fn single_sig_webauthn(
   )
 }
 
+pub fn default() -> SignatureProof {
+  SignatureProof(
+    public_key.default(),
+    merkle_path.empty(),
+    signature.default(),
+    None,
+  )
+}
+
 pub fn deserialize(buf: BitArray) -> Result(#(SignatureProof, BitArray), String) {
   use #(#(signature_alg, flags), rest) <- result.try(
     deserialize_type_and_flags_byte(buf),
