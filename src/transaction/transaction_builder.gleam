@@ -2,10 +2,11 @@ import account/account_type
 import account/address.{type Address}
 import coin.{type Coin}
 import gleam/option.{type Option, None, Some}
+import gleam/result
 import key/ed25519/public_key as ed25519_public_key
 import policy
 import transaction/network_id.{type NetworkId}
-import transaction/signature_proof
+import transaction/signature_proof.{type SignatureProof}
 import transaction/staking_data
 import transaction/transaction.{type Transaction, Transaction}
 import transaction/transaction_flags
@@ -89,6 +90,72 @@ pub fn new_basic_with_data(
 //   todo
 // }
 
+pub type InternallyUnsignedTransaction {
+  InternallyUnsignedTransaction(transaction: Transaction)
+}
+
+pub fn set_internal_proof(
+  transaction: InternallyUnsignedTransaction,
+  proof: SignatureProof,
+) -> Transaction {
+  let assert Ok(data) =
+    staking_data.deserialize_all(transaction.transaction.recipient_data)
+
+  let data = case data {
+    staking_data.CreateValidator(
+      signing_key,
+      voting_key,
+      reward_address,
+      signal_data,
+      proof_of_knowledge,
+      _,
+    ) ->
+      staking_data.CreateValidator(
+        signing_key:,
+        voting_key:,
+        reward_address:,
+        signal_data:,
+        proof_of_knowledge:,
+        proof:,
+      )
+    staking_data.UpdateValidator(
+      new_signing_key,
+      new_voting_key,
+      new_reward_address,
+      new_signal_data,
+      new_proof_of_knowledge,
+      _,
+    ) ->
+      staking_data.UpdateValidator(
+        new_signing_key:,
+        new_voting_key:,
+        new_reward_address:,
+        new_signal_data:,
+        new_proof_of_knowledge:,
+        proof:,
+      )
+    staking_data.DeactivateValidator(validator_address, _) ->
+      staking_data.DeactivateValidator(validator_address:, proof:)
+    staking_data.ReactivateValidator(validator_address, _) ->
+      staking_data.ReactivateValidator(validator_address:, proof:)
+    staking_data.RetireValidator(_) -> staking_data.RetireValidator(proof:)
+    staking_data.CreateStaker(delegation, _) ->
+      staking_data.CreateStaker(delegation:, proof:)
+    staking_data.AddStake(_) -> data
+    staking_data.UpdateStaker(new_delegation, reactivate_all_stake, _) ->
+      staking_data.UpdateStaker(new_delegation:, reactivate_all_stake:, proof:)
+    staking_data.SetActiveStake(new_active_balance, _) ->
+      staking_data.SetActiveStake(new_active_balance:, proof:)
+    staking_data.RetireStake(retire_stake, _) ->
+      staking_data.RetireStake(retire_stake:, proof:)
+  }
+
+  Transaction(
+    ..transaction.transaction,
+    recipient_data: staking_data.serialize_to_bits(data),
+  )
+}
+
 pub fn new_create_staker(
   sender: Address,
   delegation: Option(Address),
@@ -96,21 +163,23 @@ pub fn new_create_staker(
   fee: Coin,
   validity_start_height: Int,
   network_id: NetworkId,
-) -> Transaction {
-  Transaction(
-    sender,
-    account_type.Basic,
-    <<>>,
-    address.staking_contract(),
-    account_type.Staking,
-    staking_data.CreateStaker(delegation, signature_proof.default())
-      |> staking_data.serialize_to_bits(),
-    value,
-    fee,
-    validity_start_height,
-    network_id,
-    None,
-    <<>>,
+) -> InternallyUnsignedTransaction {
+  InternallyUnsignedTransaction(
+    Transaction(
+      sender,
+      account_type.Basic,
+      <<>>,
+      address.staking_contract(),
+      account_type.Staking,
+      staking_data.CreateStaker(delegation, signature_proof.default())
+        |> staking_data.serialize_to_bits(),
+      value,
+      fee,
+      validity_start_height,
+      network_id,
+      None,
+      <<>>,
+    ),
   )
 }
 
@@ -146,25 +215,27 @@ pub fn new_update_staker(
   fee: Coin,
   validity_start_height: Int,
   network_id: NetworkId,
-) -> Transaction {
-  Transaction(
-    sender,
-    account_type.Basic,
-    <<>>,
-    address.staking_contract(),
-    account_type.Staking,
-    staking_data.UpdateStaker(
-      new_delegation,
-      reactivate_all_stake,
-      signature_proof.default(),
-    )
-      |> staking_data.serialize_to_bits(),
-    coin.zero(),
-    fee,
-    validity_start_height,
-    network_id,
-    Some(transaction_flags.Signaling),
-    <<>>,
+) -> InternallyUnsignedTransaction {
+  InternallyUnsignedTransaction(
+    Transaction(
+      sender,
+      account_type.Basic,
+      <<>>,
+      address.staking_contract(),
+      account_type.Staking,
+      staking_data.UpdateStaker(
+        new_delegation,
+        reactivate_all_stake,
+        signature_proof.default(),
+      )
+        |> staking_data.serialize_to_bits(),
+      coin.zero(),
+      fee,
+      validity_start_height,
+      network_id,
+      Some(transaction_flags.Signaling),
+      <<>>,
+    ),
   )
 }
 
@@ -174,21 +245,23 @@ pub fn new_set_active_stake(
   fee: Coin,
   validity_start_height: Int,
   network_id: NetworkId,
-) -> Transaction {
-  Transaction(
-    sender,
-    account_type.Basic,
-    <<>>,
-    address.staking_contract(),
-    account_type.Staking,
-    staking_data.SetActiveStake(new_active_balance, signature_proof.default())
-      |> staking_data.serialize_to_bits(),
-    coin.zero(),
-    fee,
-    validity_start_height,
-    network_id,
-    Some(transaction_flags.Signaling),
-    <<>>,
+) -> InternallyUnsignedTransaction {
+  InternallyUnsignedTransaction(
+    Transaction(
+      sender,
+      account_type.Basic,
+      <<>>,
+      address.staking_contract(),
+      account_type.Staking,
+      staking_data.SetActiveStake(new_active_balance, signature_proof.default())
+        |> staking_data.serialize_to_bits(),
+      coin.zero(),
+      fee,
+      validity_start_height,
+      network_id,
+      Some(transaction_flags.Signaling),
+      <<>>,
+    ),
   )
 }
 
@@ -198,21 +271,23 @@ pub fn new_retire_stake(
   fee: Coin,
   validity_start_height: Int,
   network_id: NetworkId,
-) -> Transaction {
-  Transaction(
-    sender,
-    account_type.Basic,
-    <<>>,
-    address.staking_contract(),
-    account_type.Staking,
-    staking_data.RetireStake(retire_stake, signature_proof.default())
-      |> staking_data.serialize_to_bits(),
-    coin.zero(),
-    fee,
-    validity_start_height,
-    network_id,
-    Some(transaction_flags.Signaling),
-    <<>>,
+) -> InternallyUnsignedTransaction {
+  InternallyUnsignedTransaction(
+    Transaction(
+      sender,
+      account_type.Basic,
+      <<>>,
+      address.staking_contract(),
+      account_type.Staking,
+      staking_data.RetireStake(retire_stake, signature_proof.default())
+        |> staking_data.serialize_to_bits(),
+      coin.zero(),
+      fee,
+      validity_start_height,
+      network_id,
+      Some(transaction_flags.Signaling),
+      <<>>,
+    ),
   )
 }
 
@@ -249,28 +324,30 @@ pub fn new_create_validator(
   fee: Coin,
   validity_start_height: Int,
   network_id: NetworkId,
-) -> Transaction {
-  Transaction(
-    sender,
-    account_type.Basic,
-    <<>>,
-    address.staking_contract(),
-    account_type.Staking,
-    staking_data.CreateValidator(
-      signing_public_key,
-      voting_public_key,
-      reward_address,
-      signal_data,
-      proof_of_knowledge,
-      signature_proof.default(),
-    )
-      |> staking_data.serialize_to_bits(),
-    policy.validator_deposit,
-    fee,
-    validity_start_height,
-    network_id,
-    None,
-    <<>>,
+) -> InternallyUnsignedTransaction {
+  InternallyUnsignedTransaction(
+    Transaction(
+      sender,
+      account_type.Basic,
+      <<>>,
+      address.staking_contract(),
+      account_type.Staking,
+      staking_data.CreateValidator(
+        signing_public_key,
+        voting_public_key,
+        reward_address,
+        signal_data,
+        proof_of_knowledge,
+        signature_proof.default(),
+      )
+        |> staking_data.serialize_to_bits(),
+      policy.validator_deposit,
+      fee,
+      validity_start_height,
+      network_id,
+      None,
+      <<>>,
+    ),
   )
 }
 
@@ -284,28 +361,30 @@ pub fn new_update_validator(
   fee: Coin,
   validity_start_height: Int,
   network_id: NetworkId,
-) -> Transaction {
-  Transaction(
-    sender,
-    account_type.Basic,
-    <<>>,
-    address.staking_contract(),
-    account_type.Staking,
-    staking_data.UpdateValidator(
-      new_signing_public_key,
-      new_voting_public_key,
-      new_reward_address,
-      new_signal_data,
-      new_proof_of_knowledge,
-      signature_proof.default(),
-    )
-      |> staking_data.serialize_to_bits(),
-    coin.zero(),
-    fee,
-    validity_start_height,
-    network_id,
-    Some(transaction_flags.Signaling),
-    <<>>,
+) -> InternallyUnsignedTransaction {
+  InternallyUnsignedTransaction(
+    Transaction(
+      sender,
+      account_type.Basic,
+      <<>>,
+      address.staking_contract(),
+      account_type.Staking,
+      staking_data.UpdateValidator(
+        new_signing_public_key,
+        new_voting_public_key,
+        new_reward_address,
+        new_signal_data,
+        new_proof_of_knowledge,
+        signature_proof.default(),
+      )
+        |> staking_data.serialize_to_bits(),
+      coin.zero(),
+      fee,
+      validity_start_height,
+      network_id,
+      Some(transaction_flags.Signaling),
+      <<>>,
+    ),
   )
 }
 
@@ -315,24 +394,26 @@ pub fn new_deactivate_validator(
   fee: Coin,
   validity_start_height: Int,
   network_id: NetworkId,
-) -> Transaction {
-  Transaction(
-    sender,
-    account_type.Basic,
-    <<>>,
-    address.staking_contract(),
-    account_type.Staking,
-    staking_data.DeactivateValidator(
-      validator_address,
-      signature_proof.default(),
-    )
-      |> staking_data.serialize_to_bits(),
-    coin.zero(),
-    fee,
-    validity_start_height,
-    network_id,
-    Some(transaction_flags.Signaling),
-    <<>>,
+) -> InternallyUnsignedTransaction {
+  InternallyUnsignedTransaction(
+    Transaction(
+      sender,
+      account_type.Basic,
+      <<>>,
+      address.staking_contract(),
+      account_type.Staking,
+      staking_data.DeactivateValidator(
+        validator_address,
+        signature_proof.default(),
+      )
+        |> staking_data.serialize_to_bits(),
+      coin.zero(),
+      fee,
+      validity_start_height,
+      network_id,
+      Some(transaction_flags.Signaling),
+      <<>>,
+    ),
   )
 }
 
@@ -342,24 +423,26 @@ pub fn new_reactivate_validator(
   fee: Coin,
   validity_start_height: Int,
   network_id: NetworkId,
-) -> Transaction {
-  Transaction(
-    sender,
-    account_type.Basic,
-    <<>>,
-    address.staking_contract(),
-    account_type.Staking,
-    staking_data.ReactivateValidator(
-      validator_address,
-      signature_proof.default(),
-    )
-      |> staking_data.serialize_to_bits(),
-    coin.zero(),
-    fee,
-    validity_start_height,
-    network_id,
-    Some(transaction_flags.Signaling),
-    <<>>,
+) -> InternallyUnsignedTransaction {
+  InternallyUnsignedTransaction(
+    Transaction(
+      sender,
+      account_type.Basic,
+      <<>>,
+      address.staking_contract(),
+      account_type.Staking,
+      staking_data.ReactivateValidator(
+        validator_address,
+        signature_proof.default(),
+      )
+        |> staking_data.serialize_to_bits(),
+      coin.zero(),
+      fee,
+      validity_start_height,
+      network_id,
+      Some(transaction_flags.Signaling),
+      <<>>,
+    ),
   )
 }
 
@@ -368,21 +451,23 @@ pub fn new_retire_validator(
   fee: Coin,
   validity_start_height: Int,
   network_id: NetworkId,
-) -> Transaction {
-  Transaction(
-    sender,
-    account_type.Basic,
-    <<>>,
-    address.staking_contract(),
-    account_type.Staking,
-    staking_data.RetireValidator(signature_proof.default())
-      |> staking_data.serialize_to_bits(),
-    coin.zero(),
-    fee,
-    validity_start_height,
-    network_id,
-    Some(transaction_flags.Signaling),
-    <<>>,
+) -> InternallyUnsignedTransaction {
+  InternallyUnsignedTransaction(
+    Transaction(
+      sender,
+      account_type.Basic,
+      <<>>,
+      address.staking_contract(),
+      account_type.Staking,
+      staking_data.RetireValidator(signature_proof.default())
+        |> staking_data.serialize_to_bits(),
+      coin.zero(),
+      fee,
+      validity_start_height,
+      network_id,
+      Some(transaction_flags.Signaling),
+      <<>>,
+    ),
   )
 }
 
