@@ -1,8 +1,7 @@
 import account/account_type
 import account/address.{type Address}
-import coin.{type Coin}
+import coin.{type Coin, Coin}
 import gleam/option.{type Option, None, Some}
-import gleam/result
 import key/ed25519/public_key as ed25519_public_key
 import policy
 import transaction/network_id.{type NetworkId}
@@ -94,6 +93,10 @@ pub type InternallyUnsignedTransaction {
   InternallyUnsignedTransaction(transaction: Transaction)
 }
 
+pub fn serialize_content(transaction: InternallyUnsignedTransaction) -> BitArray {
+  transaction.serialize_content(transaction.transaction)
+}
+
 pub fn set_internal_proof(
   transaction: InternallyUnsignedTransaction,
   proof: SignatureProof,
@@ -103,12 +106,12 @@ pub fn set_internal_proof(
 
   let data = case data {
     staking_data.CreateValidator(
-      signing_key,
-      voting_key,
-      reward_address,
-      signal_data,
-      proof_of_knowledge,
-      _,
+      signing_key:,
+      voting_key:,
+      reward_address:,
+      signal_data:,
+      proof_of_knowledge:,
+      proof: _,
     ) ->
       staking_data.CreateValidator(
         signing_key:,
@@ -119,12 +122,12 @@ pub fn set_internal_proof(
         proof:,
       )
     staking_data.UpdateValidator(
-      new_signing_key,
-      new_voting_key,
-      new_reward_address,
-      new_signal_data,
-      new_proof_of_knowledge,
-      _,
+      new_signing_key:,
+      new_voting_key:,
+      new_reward_address:,
+      new_signal_data:,
+      new_proof_of_knowledge:,
+      proof: _,
     ) ->
       staking_data.UpdateValidator(
         new_signing_key:,
@@ -134,25 +137,26 @@ pub fn set_internal_proof(
         new_proof_of_knowledge:,
         proof:,
       )
-    staking_data.DeactivateValidator(validator_address, _) ->
+    staking_data.DeactivateValidator(validator_address:, proof: _) ->
       staking_data.DeactivateValidator(validator_address:, proof:)
-    staking_data.ReactivateValidator(validator_address, _) ->
+    staking_data.ReactivateValidator(validator_address:, proof: _) ->
       staking_data.ReactivateValidator(validator_address:, proof:)
     staking_data.RetireValidator(_) -> staking_data.RetireValidator(proof:)
-    staking_data.CreateStaker(delegation, _) ->
+    staking_data.CreateStaker(delegation:, proof: _) ->
       staking_data.CreateStaker(delegation:, proof:)
-    staking_data.AddStake(_) -> data
-    staking_data.UpdateStaker(new_delegation, reactivate_all_stake, _) ->
+    staking_data.AddStake(staker_address:) ->
+      staking_data.AddStake(staker_address:)
+    staking_data.UpdateStaker(new_delegation:, reactivate_all_stake:, proof: _) ->
       staking_data.UpdateStaker(new_delegation:, reactivate_all_stake:, proof:)
-    staking_data.SetActiveStake(new_active_balance, _) ->
+    staking_data.SetActiveStake(new_active_balance:, proof: _) ->
       staking_data.SetActiveStake(new_active_balance:, proof:)
-    staking_data.RetireStake(retire_stake, _) ->
+    staking_data.RetireStake(retire_stake:, proof: _) ->
       staking_data.RetireStake(retire_stake:, proof:)
   }
 
   Transaction(
     ..transaction.transaction,
-    recipient_data: staking_data.serialize_to_bits(data),
+    recipient_data: data |> staking_data.serialize_to_bits(),
   )
 }
 
@@ -171,7 +175,7 @@ pub fn new_create_staker(
       <<>>,
       address.staking_contract(),
       account_type.Staking,
-      staking_data.CreateStaker(delegation, signature_proof.default())
+      staking_data.CreateStaker(delegation:, proof: signature_proof.default())
         |> staking_data.serialize_to_bits(),
       value,
       fee,
@@ -197,7 +201,7 @@ pub fn new_add_stake(
     <<>>,
     address.staking_contract(),
     account_type.Staking,
-    staking_data.AddStake(staker_address)
+    staking_data.AddStake(staker_address:)
       |> staking_data.serialize_to_bits(),
     value,
     fee,
@@ -224,9 +228,9 @@ pub fn new_update_staker(
       address.staking_contract(),
       account_type.Staking,
       staking_data.UpdateStaker(
-        new_delegation,
-        reactivate_all_stake,
-        signature_proof.default(),
+        new_delegation:,
+        reactivate_all_stake:,
+        proof: signature_proof.default(),
       )
         |> staking_data.serialize_to_bits(),
       coin.zero(),
@@ -253,7 +257,10 @@ pub fn new_set_active_stake(
       <<>>,
       address.staking_contract(),
       account_type.Staking,
-      staking_data.SetActiveStake(new_active_balance, signature_proof.default())
+      staking_data.SetActiveStake(
+        new_active_balance:,
+        proof: signature_proof.default(),
+      )
         |> staking_data.serialize_to_bits(),
       coin.zero(),
       fee,
@@ -279,7 +286,7 @@ pub fn new_retire_stake(
       <<>>,
       address.staking_contract(),
       account_type.Staking,
-      staking_data.RetireStake(retire_stake, signature_proof.default())
+      staking_data.RetireStake(retire_stake:, proof: signature_proof.default())
         |> staking_data.serialize_to_bits(),
       coin.zero(),
       fee,
@@ -316,8 +323,8 @@ pub fn new_remove_stake(
 
 pub fn new_create_validator(
   sender: Address,
-  signing_public_key: ed25519_public_key.PublicKey,
-  voting_public_key: staking_data.BlsPublicKey,
+  signing_key: ed25519_public_key.PublicKey,
+  voting_key: staking_data.BlsPublicKey,
   proof_of_knowledge: staking_data.BlsSignature,
   reward_address: Address,
   signal_data: Option(staking_data.Blake2bHash),
@@ -333,12 +340,12 @@ pub fn new_create_validator(
       address.staking_contract(),
       account_type.Staking,
       staking_data.CreateValidator(
-        signing_public_key,
-        voting_public_key,
-        reward_address,
-        signal_data,
-        proof_of_knowledge,
-        signature_proof.default(),
+        signing_key:,
+        voting_key:,
+        proof_of_knowledge:,
+        reward_address:,
+        signal_data:,
+        proof: signature_proof.default(),
       )
         |> staking_data.serialize_to_bits(),
       policy.validator_deposit,
@@ -353,8 +360,8 @@ pub fn new_create_validator(
 
 pub fn new_update_validator(
   sender: Address,
-  new_signing_public_key: Option(ed25519_public_key.PublicKey),
-  new_voting_public_key: Option(staking_data.BlsPublicKey),
+  new_signing_key: Option(ed25519_public_key.PublicKey),
+  new_voting_key: Option(staking_data.BlsPublicKey),
   new_proof_of_knowledge: Option(staking_data.BlsSignature),
   new_reward_address: Option(Address),
   new_signal_data: Option(Option(staking_data.Blake2bHash)),
@@ -370,12 +377,12 @@ pub fn new_update_validator(
       address.staking_contract(),
       account_type.Staking,
       staking_data.UpdateValidator(
-        new_signing_public_key,
-        new_voting_public_key,
-        new_reward_address,
-        new_signal_data,
-        new_proof_of_knowledge,
-        signature_proof.default(),
+        new_signing_key:,
+        new_voting_key:,
+        new_reward_address:,
+        new_signal_data:,
+        new_proof_of_knowledge:,
+        proof: signature_proof.default(),
       )
         |> staking_data.serialize_to_bits(),
       coin.zero(),
@@ -403,8 +410,8 @@ pub fn new_deactivate_validator(
       address.staking_contract(),
       account_type.Staking,
       staking_data.DeactivateValidator(
-        validator_address,
-        signature_proof.default(),
+        validator_address:,
+        proof: signature_proof.default(),
       )
         |> staking_data.serialize_to_bits(),
       coin.zero(),
@@ -432,8 +439,8 @@ pub fn new_reactivate_validator(
       address.staking_contract(),
       account_type.Staking,
       staking_data.ReactivateValidator(
-        validator_address,
-        signature_proof.default(),
+        validator_address:,
+        proof: signature_proof.default(),
       )
         |> staking_data.serialize_to_bits(),
       coin.zero(),
@@ -459,7 +466,7 @@ pub fn new_retire_validator(
       <<>>,
       address.staking_contract(),
       account_type.Staking,
-      staking_data.RetireValidator(signature_proof.default())
+      staking_data.RetireValidator(proof: signature_proof.default())
         |> staking_data.serialize_to_bits(),
       coin.zero(),
       fee,
@@ -484,7 +491,7 @@ pub fn new_delete_validator(
     recipient,
     account_type.Basic,
     <<>>,
-    policy.validator_deposit,
+    Coin(policy.validator_deposit.luna - fee.luna),
     fee,
     validity_start_height,
     network_id,
