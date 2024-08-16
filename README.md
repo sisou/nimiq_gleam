@@ -58,6 +58,7 @@ import nimiq_gleam/key/signature.{EdDsaSignature}
 import nimiq_gleam/transaction/network_id
 import nimiq_gleam/transaction/signature_proof
 import nimiq_gleam/transaction/transaction
+import nimiq_gleam/transaction/transaction_builder
 
 let assert Ok(sender) =
   "NQ17 D2ES UBTP N14D RG4E 2KBK 217A 2GH2 NNY1"
@@ -68,7 +69,7 @@ let assert Ok(recipient) =
   |> address.from_user_friendly_address()
 
 let tx =
-  transaction.new_basic(
+  transaction_builder.new_basic(
     sender,
     recipient,
     Coin(100_000_000), // Value in luna
