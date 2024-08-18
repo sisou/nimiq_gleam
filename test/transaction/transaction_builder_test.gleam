@@ -1,5 +1,8 @@
 import account/address.{type Address}
+import bls/compressed_signature
+import bls/secret_key
 import coin.{Coin}
+import dummy
 import gleam/bit_array
 import gleam/option.{Some}
 import gleeunit/should
@@ -22,11 +25,9 @@ const validator_signing_key = "b300481ddd7af6be3cf5c123b7af2c21f87f4ac808c8b0e62
 
 const validator_signing_secret_key = "84c961b11b52a8244ffc5e9d0965bc2dfa6764970f8e4989d45901de401baf27"
 
-const validator_voting_key = "713c60858b5c72adcf8b72b4dbea959d042769dcc93a0190e4b8aec92283548138833950aa214d920c17d3d19de27f6176d9fb21620edae76ad398670e17d5eba2f494b9b6901d457592ea68f9d35380c857ba44856ae037aff272ad6c1900442b426dde0bc53431e9ce5807f7ec4a05e71ce4a1e7e7b2511891521c4d3fd975764e3031ef646d48fa881ad88240813d40e533788f0dac2bc4d4c25db7b108c67dd28b7ec4c240cdc044badcaed7860a5d3da42ef860ed25a6db9c07be000a7f504f6d1b24ac81642206d5996b20749a156d7b39f851e60f228b19eef3fb3547469f03fc9764f5f68bc88e187ffee0f43f169acde847c78ea88029cdb19b91dd9562d60b607dd0347d67a0e33286c8908e4e9579a42685da95f06a9201"
+const validator_voting_key = dummy.bls_public_key_hex
 
-// const validator_voting_secret_key = "65100f4aa301ded3d9868c3d76052dd0dfede426b51af371dcd8a4a076f11651c86286d2891063ce7b78217a6e163f38ebfde7eb9dcbf5927b2278b00d77329141d44f070620dd6b995455a6cdfe8eee03f657ff255cfb8fb3460ce1135701"
-
-const validator_proof_of_knowledge = "b7561c15e53da2c482bfafddbf404f28b14ee2743e5cfe451c860da378b2ac23a651b574183d1287e2cea109943a34c44a7df9eb2fe5067c70f1c02bde900828c232a3d7736a278e0e8ac679bc2a1669f660c3810980526b7890f6e1708381"
+const validator_voting_secret_key = dummy.bls_secret_key_hex
 
 const staker_address = "8c551fabc6e6e00c609c3f0313257ad7e835643c"
 
@@ -46,8 +47,14 @@ pub fn create_validator_transaction_test() {
     bit_array.base16_decode(
       "0000000000000000000000000000000000000000000000000000000000000000",
     )
-  let assert Ok(bls_proof_of_knowledge) =
-    bit_array.base16_decode(validator_proof_of_knowledge)
+
+  // BLS Proof of Knowledge
+  let assert Ok(bls_secret_key) =
+    bit_array.base16_decode(validator_voting_secret_key)
+  let assert Ok(bls_secret_key) = secret_key.deserialize_all(bls_secret_key)
+  let bls_proof_of_knowledge =
+    secret_key.proof_of_knowledge(bls_secret_key)
+    |> compressed_signature.serialize_to_bits()
 
   let tx =
     transaction_builder.new_create_validator(
@@ -85,8 +92,14 @@ pub fn update_validator_transaction_test() {
     bit_array.base16_decode(
       "0000000000000000000000000000000000000000000000000000000000000000",
     )
-  let assert Ok(bls_proof_of_knowledge) =
-    bit_array.base16_decode(validator_proof_of_knowledge)
+
+  // BLS Proof of Knowledge
+  let assert Ok(bls_secret_key) =
+    bit_array.base16_decode(validator_voting_secret_key)
+  let assert Ok(bls_secret_key) = secret_key.deserialize_all(bls_secret_key)
+  let bls_proof_of_knowledge =
+    secret_key.proof_of_knowledge(bls_secret_key)
+    |> compressed_signature.serialize_to_bits()
 
   let tx =
     transaction_builder.new_update_validator(

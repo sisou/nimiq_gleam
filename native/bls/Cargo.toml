@@ -1,0 +1,13 @@
+[package]
+name = "bls"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["dylib"]
+
+[dependencies]
+nimiq-bls = { git = "https://github.com/nimiq/core-rs-albatross", default-features = false, features = ["serde-derive"] }
+nimiq-serde = { git = "https://github.com/nimiq/core-rs-albatross", default-features = false }
+nimiq-utils = { git = "https://github.com/nimiq/core-rs-albatross", default-features = false }
+rustler = "0.34.0"
