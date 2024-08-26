@@ -3,6 +3,7 @@ import coin.{type Coin}
 import gleam/bytes_builder.{type BytesBuilder}
 import gleam/int
 import gleam/option.{type Option, None, Some}
+import gleam/pair
 import gleam/result
 import key/ed25519/public_key.{type PublicKey as Ed25519PublicKey}
 import transaction/signature_proof.{type SignatureProof}
@@ -82,7 +83,7 @@ pub fn deserialize(
         False -> Ok(#(None, rest))
         True ->
           serde.deserialize_bitarray(rest, 32)
-          |> result.map(fn(tuple) { #(Some(tuple.0), tuple.1) })
+          |> result.map(pair.map_first(_, Some))
       })
       use #(proof_of_knowledge, rest) <- result.try(serde.deserialize_bitarray(
         rest,
@@ -111,14 +112,14 @@ pub fn deserialize(
         False -> Ok(#(None, rest))
         True ->
           public_key.deserialize(rest)
-          |> result.map(fn(tuple) { #(Some(tuple.0), tuple.1) })
+          |> result.map(pair.map_first(_, Some))
       })
       use #(has_new_voting_key, rest) <- result.try(serde.deserialize_bool(rest))
       use #(new_voting_key, rest) <- result.try(case has_new_voting_key {
         False -> Ok(#(None, rest))
         True ->
           serde.deserialize_bitarray(rest, 285)
-          |> result.map(fn(tuple) { #(Some(tuple.0), tuple.1) })
+          |> result.map(pair.map_first(_, Some))
       })
       use #(has_new_reward_address, rest) <- result.try(serde.deserialize_bool(
         rest,
@@ -129,7 +130,7 @@ pub fn deserialize(
         False -> Ok(#(None, rest))
         True ->
           address.deserialize(rest)
-          |> result.map(fn(tuple) { #(Some(tuple.0), tuple.1) })
+          |> result.map(pair.map_first(_, Some))
       })
       use #(has_new_signal_data, rest) <- result.try(serde.deserialize_bool(
         rest,
@@ -144,7 +145,7 @@ pub fn deserialize(
             False -> Ok(#(None, rest))
             True ->
               serde.deserialize_bitarray(rest, 32)
-              |> result.map(fn(tuple) { #(Some(tuple.0), tuple.1) })
+              |> result.map(pair.map_first(_, Some))
           })
 
           Ok(#(Some(signal_data), rest))
@@ -159,7 +160,7 @@ pub fn deserialize(
         False -> Ok(#(None, rest))
         True ->
           serde.deserialize_bitarray(rest, 95)
-          |> result.map(fn(tuple) { #(Some(tuple.0), tuple.1) })
+          |> result.map(pair.map_first(_, Some))
       })
       use #(proof, rest) <- result.try(signature_proof.deserialize(rest))
 
@@ -202,7 +203,7 @@ pub fn deserialize(
         False -> Ok(#(None, rest))
         True ->
           address.deserialize(rest)
-          |> result.map(fn(tuple) { #(Some(tuple.0), tuple.1) })
+          |> result.map(pair.map_first(_, Some))
       })
       use #(proof, rest) <- result.try(signature_proof.deserialize(rest))
 
@@ -221,7 +222,7 @@ pub fn deserialize(
         False -> Ok(#(None, rest))
         True ->
           address.deserialize(rest)
-          |> result.map(fn(tuple) { #(Some(tuple.0), tuple.1) })
+          |> result.map(pair.map_first(_, Some))
       })
       use #(reactivate_all_stake, rest) <- result.try(serde.deserialize_bool(
         rest,
