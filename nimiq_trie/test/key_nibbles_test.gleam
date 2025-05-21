@@ -132,3 +132,71 @@ pub fn nibbles_common_prefix_test() {
     key_nibbles.from_str("2da") |> unwrap(),
   )
 }
+
+// Serialization tests
+
+pub fn serde_empty_test() {
+  should.equal(
+    key_nibbles.deserialize_all(<<0, 0>>) |> unwrap(),
+    key_nibbles.root(),
+  )
+  should.equal(key_nibbles.root() |> key_nibbles.serialize_to_vec(), <<0, 0>>)
+}
+
+pub fn serde_one_test() {
+  let one0 = key_nibbles.from_str("0") |> unwrap()
+  let one1 = key_nibbles.from_str("1") |> unwrap()
+  let onef = key_nibbles.from_str("f") |> unwrap()
+  should.equal(
+    key_nibbles.deserialize_all(<<0x01, 0x01, 0x00>>) |> unwrap(),
+    one0,
+  )
+  should.equal(
+    key_nibbles.deserialize_all(<<0x01, 0x01, 0x10>>) |> unwrap(),
+    one1,
+  )
+  should.equal(
+    key_nibbles.deserialize_all(<<0x01, 0x01, 0xf0>>) |> unwrap(),
+    onef,
+  )
+  should.equal(one0 |> key_nibbles.serialize_to_vec(), <<0x01, 0x01, 0x00>>)
+  should.equal(one1 |> key_nibbles.serialize_to_vec(), <<0x01, 0x01, 0x10>>)
+  should.equal(onef |> key_nibbles.serialize_to_vec(), <<0x01, 0x01, 0xf0>>)
+}
+
+pub fn serde_two_test() {
+  let two = key_nibbles.from_str("9a") |> unwrap()
+  should.equal(
+    key_nibbles.deserialize_all(<<0x02, 0x01, 0x9a>>) |> unwrap(),
+    two,
+  )
+  should.equal(two |> key_nibbles.serialize_to_vec(), <<0x02, 0x01, 0x9a>>)
+}
+
+pub fn serde_longer_test() {
+  let longer1 = key_nibbles.from_str("68656c6c6f2c20776f726c6421") |> unwrap()
+  let longer2 = key_nibbles.from_str("68656c6c6f2c20776f726c64215") |> unwrap()
+  should.equal(
+    key_nibbles.deserialize_all(<<0x1a, 0x0d, "hello, world!">>) |> unwrap(),
+    longer1,
+  )
+  should.equal(
+    key_nibbles.deserialize_all(<<0x1b, 0x0e, "hello, world!", 0x50>>)
+      |> unwrap(),
+    longer2,
+  )
+  should.equal(longer1 |> key_nibbles.serialize_to_vec(), <<
+    0x1a, 0x0d, "hello, world!",
+  >>)
+  should.equal(longer2 |> key_nibbles.serialize_to_vec(), <<
+    0x1b, 0x0e, "hello, world!", 0x50,
+  >>)
+}
+
+pub fn serde_error_test() {
+  should.be_error(key_nibbles.deserialize_all(<<>>))
+  should.be_error(key_nibbles.deserialize_all(<<0x00>>))
+  should.be_error(key_nibbles.deserialize_all(<<0xff>>))
+  should.be_error(key_nibbles.deserialize_all(<<0x00, 0x01, 0x00>>))
+  should.be_error(key_nibbles.deserialize_all(<<0x01, 0x00, 0x00>>))
+}

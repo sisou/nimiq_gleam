@@ -1,3 +1,5 @@
+import gleam/bit_array
+import gleam/bytes_tree.{type BytesTree}
 import gleam/int
 import gleam/io
 import gleam/list
@@ -5,6 +7,7 @@ import gleam/option.{type Option, None}
 import gleam/result
 import gleam/string
 import iv
+import utils/serde
 
 pub type KeyNibbles {
   KeyNibbles(nibbles: iv.Array(Int))
@@ -101,4 +104,75 @@ pub fn common_prefix(key1: KeyNibbles, key2: KeyNibbles) -> KeyNibbles {
     Ok(index) -> slice(key1, 0, index)
     _ -> key1
   }
+}
+
+pub fn deserialize(buf: BitArray) -> Result(#(KeyNibbles, BitArray), String) {
+  use #(length, rest) <- result.try(serde.deserialize_int(buf, 8))
+  use #(byte_length, rest) <- result.try(serde.deserialize_int(rest, 8))
+  case True {
+    _ if byte_length != { length + 1 } / 2 ->
+      Error(
+        "Invalid byte length: expected "
+        <> { length + 1 } / 2 |> int.to_string()
+        <> ", got "
+        <> byte_length |> int.to_string(),
+      )
+    _ -> {
+      use #(bytes, rest) <- result.try(serde.deserialize_bitarray(
+        rest,
+        byte_length,
+      ))
+      // Convert the bytes to nibbles
+      bytes
+      |> bit_array.base16_encode()
+      |> string.to_graphemes()
+      |> list.map(fn(c) { c |> int.base_parse(16) })
+      |> result.all()
+      |> result.replace_error("Impossible error: invalid hex string.")
+      |> result.map(fn(nibbles) {
+        #(
+          KeyNibbles(
+            nibbles
+            |> list.take(length)
+            |> iv.from_list(),
+          ),
+          rest,
+        )
+      })
+    }
+  }
+}
+
+pub fn deserialize_all(buf: BitArray) -> Result(KeyNibbles, String) {
+  case deserialize(buf) {
+    Ok(#(key, <<>>)) -> Ok(key)
+    Ok(_) -> Error("Invalid KeyNibbles: trailing bytes")
+    Error(err) -> Error(err)
+  }
+}
+
+pub fn serialize(key: KeyNibbles) -> BytesTree {
+  let length = len(key)
+  let byte_length = { length + 1 } / 2
+
+  // Using a BitArray as a builder is not as efficient as using a BytesTree, but
+  // BytesTrees cannot append half bytes without padding them in every append() call.
+  let buf =
+    bytes_tree.new()
+    |> serde.serialize_int(length, 8)
+    |> serde.serialize_int(byte_length, 8)
+
+  let bytes = case length {
+    0 -> <<>>
+    _ ->
+      key.nibbles
+      |> iv.fold(<<>>, fn(acc, nibble) { acc |> bit_array.append(<<nibble:4>>) })
+      |> bit_array.pad_to_bytes()
+  }
+
+  buf |> serde.serialize_bitarray(bytes)
+}
+
+pub fn serialize_to_vec(key: KeyNibbles) -> BitArray {
+  key |> serialize() |> bytes_tree.to_bit_array()
 }

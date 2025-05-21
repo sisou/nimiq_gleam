@@ -1,4 +1,5 @@
 import gleam/bytes_tree
+import utils/serde
 
 pub type Account {
   Basic(balance: Int)
@@ -11,8 +12,8 @@ pub fn serialize_to_vec(account: Account) -> BitArray {
   case account {
     Basic(balance) -> {
       bytes_tree.new()
-      |> bytes_tree.append(<<0>>)
-      |> bytes_tree.append(<<balance:64>>)
+      |> serde.serialize_int(0, 8)
+      |> serde.serialize_int(balance, 64)
       |> bytes_tree.to_bit_array()
     }
     // Vesting(_balance) ->
