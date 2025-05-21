@@ -2,6 +2,7 @@ use nimiq_account::{Account, BasicAccount};
 use nimiq_database::declare_table;
 use nimiq_database::mdbx::MdbxDatabase;
 use nimiq_database::traits::Database;
+use nimiq_hash::{Blake2bHash, Hash};
 use nimiq_keys::Address;
 use nimiq_primitives::coin::Coin;
 use nimiq_primitives::key_nibbles::KeyNibbles;
@@ -92,4 +93,33 @@ pub fn serialize_trie_node() {
     // assert_eq!(trie.get(&txn, &key_1).expect("complete trie"), None::<i32>);
     // assert_eq!(trie.get(&txn, &key_2).expect("complete trie"), None::<i32>);
     // assert_eq!(trie.get(&txn, &key_3).expect("complete trie"), None::<i32>);
+}
+
+pub fn hash_trie_node() {
+    let key: KeyNibbles = "cfb986".parse().unwrap();
+
+        // let leaf_node = TrieNode::new_leaf(key.clone(), vec![66]);
+        let mut branch_node = TrieNode::new_empty(key);
+
+        let child_key_1 = "cfb986f5a".parse().unwrap();
+        branch_node
+            .put_child(&child_key_1, "child_1".hash())
+            .unwrap();
+
+        let child_key_2 = "cfb986ab9".parse().unwrap();
+        branch_node
+            .put_child(&child_key_2, "child_2".hash())
+            .unwrap();
+
+        let child_key_3 = "cfb9860f6".parse().unwrap();
+        branch_node
+            .put_child(&child_key_3, "child_3".hash())
+            .unwrap();
+
+        let child_key_4 = "cfb986d50".parse().unwrap();
+        branch_node
+            .put_child(&child_key_4, "child_4".hash())
+            .unwrap();
+
+        println!("Branch node hash: {:?}", branch_node.hash::<Blake2bHash>());
 }

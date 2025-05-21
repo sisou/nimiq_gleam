@@ -176,3 +176,7 @@ pub fn serialize(key: KeyNibbles) -> BytesTree {
 pub fn serialize_to_vec(key: KeyNibbles) -> BitArray {
   key |> serialize() |> bytes_tree.to_bit_array()
 }
+
+pub fn equals(key1: KeyNibbles, key2: KeyNibbles) -> Bool {
+  iv.equal(key1.nibbles, key2.nibbles)
+}
