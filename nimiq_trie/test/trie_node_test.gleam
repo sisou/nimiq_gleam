@@ -314,3 +314,96 @@ pub fn hash_test() {
     Some("d94a2c15ad309f8ca8802da6ca4f482f9d40ca9fd2646c12b783acba70a2807c"),
   )
 }
+
+pub fn serialize_test() {
+  let key = key_nibbles.from_str("cfb986") |> utils.unwrap()
+
+  let branch_node = trie_node.new_empty(key)
+
+  let child_key_1 = key_nibbles.from_str("cfb986f5a") |> utils.unwrap()
+  let branch_node =
+    branch_node
+    |> trie_node.put_child(child_key_1, <<"child_1">> |> blake2b.hash())
+    |> utils.unwrap()
+
+  let child_key_2 = key_nibbles.from_str("cfb986ab9") |> utils.unwrap()
+  let branch_node =
+    branch_node
+    |> trie_node.put_child(child_key_2, <<"child_2">> |> blake2b.hash())
+    |> utils.unwrap()
+
+  let child_key_3 = key_nibbles.from_str("cfb9860f6") |> utils.unwrap()
+  let branch_node =
+    branch_node
+    |> trie_node.put_child(child_key_3, <<"child_3">> |> blake2b.hash())
+    |> utils.unwrap()
+
+  let child_key_4 = key_nibbles.from_str("cfb986d50") |> utils.unwrap()
+  let branch_node =
+    branch_node
+    |> trie_node.put_child(child_key_4, <<"child_4">> |> blake2b.hash())
+    |> utils.unwrap()
+
+  should.equal(
+    branch_node
+      |> trie_node.serialize_to_vec()
+      |> bit_array.base16_encode()
+      |> string.lowercase(),
+    // This serialization was generated in rs-reference
+    "000000040103020f60b829fac4b0785910826b0ddea3612127f4d6311134c803c0d020c29c18770f26000000000000000000010302ab90f659ba1ff75e7e0f325d3974c33a332a7637b71e753b3e6dee9219799de3d6630000010302d5006b83553e1f4cc008f5649b1fed18e574298801c87957b56d7ea1d10f484b38aa00010302f5a0044ce2ce3d668da26636a44865e33341be59835b5490c1764a0dd3bcb33a96b1",
+  )
+}
+
+pub fn deserialize_test() {
+  let key = key_nibbles.from_str("cfb986") |> utils.unwrap()
+
+  let branch_node =
+    trie_node.deserialize_all(
+      bit_array.base16_decode(
+        "000000040103020f60b829fac4b0785910826b0ddea3612127f4d6311134c803c0d020c29c18770f26000000000000000000010302ab90f659ba1ff75e7e0f325d3974c33a332a7637b71e753b3e6dee9219799de3d6630000010302d5006b83553e1f4cc008f5649b1fed18e574298801c87957b56d7ea1d10f484b38aa00010302f5a0044ce2ce3d668da26636a44865e33341be59835b5490c1764a0dd3bcb33a96b1",
+      )
+      |> utils.unwrap(),
+    )
+    |> utils.unwrap()
+
+  // Set correct key (the key is not part of the serialization)
+  let branch_node = TrieNode(..branch_node, key:)
+
+  should.be_none(branch_node.root_data)
+  should.be_none(branch_node.value)
+
+  let child_key_1 = key_nibbles.from_str("cfb986f5a") |> utils.unwrap()
+  let child_key_2 = key_nibbles.from_str("cfb986ab9") |> utils.unwrap()
+  let child_key_3 = key_nibbles.from_str("cfb9860f6") |> utils.unwrap()
+  let child_key_4 = key_nibbles.from_str("cfb986d50") |> utils.unwrap()
+
+  should.equal(
+    branch_node |> trie_node.child(child_key_1) |> result.map(fn(c) { c.hash }),
+    Ok(<<"child_1">> |> blake2b.hash()),
+  )
+  should.equal(
+    branch_node |> trie_node.child(child_key_2) |> result.map(fn(c) { c.hash }),
+    Ok(<<"child_2">> |> blake2b.hash()),
+  )
+  should.equal(
+    branch_node |> trie_node.child(child_key_3) |> result.map(fn(c) { c.hash }),
+    Ok(<<"child_3">> |> blake2b.hash()),
+  )
+  should.equal(
+    branch_node |> trie_node.child(child_key_4) |> result.map(fn(c) { c.hash }),
+    Ok(<<"child_4">> |> blake2b.hash()),
+  )
+
+  should.equal(
+    branch_node
+      |> trie_node.child(child_key_1 |> key_nibbles.slice(0, 7))
+      |> result.map(fn(c) { c.hash }),
+    Ok(<<"child_1">> |> blake2b.hash()),
+  )
+
+  let child_key_5 = key_nibbles.from_str("c0b986d50") |> utils.unwrap()
+  should.equal(
+    branch_node |> trie_node.child(child_key_5) |> result.map(fn(c) { c.hash }),
+    Error(trie.WrongPrefix),
+  )
+}

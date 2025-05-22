@@ -1,5 +1,6 @@
 import blake2b
-import gleam/bytes_tree
+import gleam/bytes_tree.{type BytesTree}
+import gleam/int
 import gleam/io
 import gleam/option.{type Option, None, Some}
 import gleam/result
@@ -8,6 +9,7 @@ import key_nibbles.{type KeyNibbles}
 import trie/root_data.{type RootData, RootData}
 import trie/trie
 import trie/trie_node_child.{type TrieNodeChild, TrieNodeChild}
+import utils/serde
 
 fn no_children() -> iv.Array(Option(TrieNodeChild)) {
   iv.repeat(None, 16)
@@ -200,34 +202,26 @@ fn can_hash(node: TrieNode) -> Bool {
 pub fn hash(node: TrieNode) -> Option(BitArray) {
   case can_hash(node) {
     True -> {
-      let hasher = bytes_tree.new()
       let hasher =
-        hasher |> bytes_tree.append_tree(node.key |> key_nibbles.serialize())
-      let hasher = case has_children(node), node.value {
-        _, None -> hasher |> bytes_tree.append(<<0>>)
-        False, Some(val) -> {
-          let hasher = hasher |> bytes_tree.append(<<1>>)
-          hasher |> bytes_tree.append(val)
-        }
-        True, Some(val) -> {
-          let hasher = hasher |> bytes_tree.append(<<2>>)
-          let val_hash = val |> blake2b.hash()
-          hasher |> bytes_tree.append(val_hash)
-        }
-      }
-      // Serialize children
+        bytes_tree.new()
+        |> key_nibbles.serialize(node.key)
       let hasher =
-        node.children
-        |> iv.fold(hasher, fn(acc, child) {
-          case child {
-            Some(child) -> {
-              let acc = acc |> bytes_tree.append(<<1>>)
-              acc
-              |> bytes_tree.append_tree(child |> trie_node_child.serialize())
-            }
-            None -> acc |> bytes_tree.append(<<0>>)
+        case has_children(node), node.value {
+          _, None -> hasher |> serde.serialize_u8(0)
+          False, Some(val) -> {
+            hasher
+            |> serde.serialize_u8(1)
+            |> serde.serialize_bitarray(val)
           }
-        })
+          True, Some(val) -> {
+            let val_hash = val |> blake2b.hash()
+            hasher
+            |> serde.serialize_u8(2)
+            |> serde.serialize_bitarray(val_hash)
+          }
+        }
+        |> serialize_children(node.children)
+
       Some(blake2b.hash(hasher |> bytes_tree.to_bit_array()))
     }
     False -> None
@@ -239,5 +233,193 @@ pub fn hash_assert(node: TrieNode) -> BitArray {
     Some(hash) -> hash
     None ->
       panic as "can only hash TrieNode with complete information about children"
+  }
+}
+
+pub fn serialize(to buf: BytesTree, node node: TrieNode) -> BytesTree {
+  let has_root_data = is_root(node)
+  let has_value = option.is_some(node.value)
+  let flags =
+    0
+    |> int.bitwise_or(case has_root_data {
+      True -> 0b01
+      False -> 0
+    })
+    |> int.bitwise_or(case has_value {
+      True -> 0b10
+      False -> 0
+    })
+  let child_count =
+    node.children
+    |> iv.fold(0, fn(acc, child) {
+      case child {
+        Some(_) -> acc + 1
+        None -> acc
+      }
+    })
+
+  buf
+  |> serde.serialize_u8(flags)
+  |> bytes_tree.append_tree(case node.root_data {
+    Some(data) ->
+      bytes_tree.new()
+      |> serde.serialize_u8(1)
+      |> root_data.serialize(data)
+    None -> bytes_tree.new() |> serde.serialize_u8(0)
+  })
+  |> bytes_tree.append_tree(case node.value {
+    Some(value) ->
+      bytes_tree.new()
+      |> serde.serialize_u8(1)
+      |> serde.serialize_bytes(value)
+    None -> bytes_tree.new() |> serde.serialize_u8(0)
+  })
+  |> serde.serialize_u8(child_count)
+  |> serialize_children(node.children)
+}
+
+fn serialize_children(
+  buf: BytesTree,
+  children: iv.Array(Option(TrieNodeChild)),
+) -> BytesTree {
+  children
+  |> iv.fold(buf, fn(acc, child) {
+    case child {
+      Some(child) -> {
+        acc
+        |> serde.serialize_u8(1)
+        |> trie_node_child.serialize(child)
+      }
+      None -> acc |> serde.serialize_u8(0)
+    }
+  })
+}
+
+pub fn serialize_to_vec(node: TrieNode) -> BitArray {
+  bytes_tree.new() |> serialize(node) |> bytes_tree.to_bit_array()
+}
+
+pub fn deserialize(buf: BitArray) -> Result(#(TrieNode, BitArray), String) {
+  use #(flags, rest) <- result.try(serde.deserialize_u8(buf))
+  let has_root_data = flags |> int.bitwise_and(0b01) != 0
+  let has_value = flags |> int.bitwise_and(0b10) != 0
+  use #(root_data, rest) <- result.try(deserialize_root_data(rest))
+  use _ <- result.try(verify_root_data_flag(has_root_data, root_data))
+  use #(value, rest) <- result.try(deserialize_value(rest))
+  use _ <- result.try(verify_value_flag(has_value, value))
+  use #(exp_child_count, rest) <- result.try(serde.deserialize_u8(rest))
+  use #(children, rest) <- result.try(deserialize_children(rest))
+  let child_count =
+    children
+    |> iv.fold(0, fn(acc, child) {
+      case child {
+        Some(_) -> acc + 1
+        None -> acc
+      }
+    })
+  use _ <- result.try(verify_children_length(exp_child_count, child_count))
+
+  Ok(#(
+    TrieNode(
+      // Make it clear that the key needs to be changed after deserialization.
+      key: key_nibbles.badbadbad(),
+      root_data:,
+      value:,
+      children:,
+    ),
+    rest,
+  ))
+}
+
+fn deserialize_root_data(
+  buf: BitArray,
+) -> Result(#(Option(RootData), BitArray), String) {
+  use #(root_data_option, rest) <- result.try(serde.deserialize_u8(buf))
+  case root_data_option {
+    1 -> {
+      use #(root_data, rest) <- result.try(root_data.deserialize(rest))
+      Ok(#(Some(root_data), rest))
+    }
+    0 -> Ok(#(None, rest))
+    _ -> panic as "Invalid root data option type"
+  }
+}
+
+fn verify_root_data_flag(
+  has_root_data: Bool,
+  root_data: Option(RootData),
+) -> Result(Nil, String) {
+  case has_root_data == option.is_some(root_data) {
+    True -> Ok(Nil)
+    False -> Error("Flags mismatch for root data")
+  }
+}
+
+fn deserialize_value(
+  buf: BitArray,
+) -> Result(#(Option(BitArray), BitArray), String) {
+  use #(value_option, rest) <- result.try(serde.deserialize_u8(buf))
+  case value_option {
+    1 -> {
+      use #(value, rest) <- result.try(serde.deserialize_bytes(rest))
+      Ok(#(Some(value), rest))
+    }
+    0 -> Ok(#(None, rest))
+    _ -> panic as "Invalid value option type"
+  }
+}
+
+fn verify_value_flag(
+  has_value: Bool,
+  value: Option(BitArray),
+) -> Result(Nil, String) {
+  case has_value == option.is_some(value) {
+    True -> Ok(Nil)
+    False -> Error("Flags mismatch for value")
+  }
+}
+
+fn deserialize_children(
+  buf: BitArray,
+) -> Result(#(iv.Array(Option(TrieNodeChild)), BitArray), String) {
+  deserialize_child(iv.new(), 0, buf)
+}
+
+fn deserialize_child(
+  children: iv.Array(Option(TrieNodeChild)),
+  idx: Int,
+  buf: BitArray,
+) -> Result(#(iv.Array(Option(TrieNodeChild)), BitArray), String) {
+  case idx {
+    16 -> Ok(#(children, buf))
+    _ -> {
+      use #(child_option, rest) <- result.try(serde.deserialize_u8(buf))
+      case child_option {
+        1 -> {
+          use #(child, rest) <- result.try(trie_node_child.deserialize(rest))
+          deserialize_child(children |> iv.append(Some(child)), idx + 1, rest)
+        }
+        0 -> deserialize_child(children |> iv.append(None), idx + 1, rest)
+        _ -> panic as "Invalid child option type"
+      }
+    }
+  }
+}
+
+fn verify_children_length(
+  exp_child_count: Int,
+  child_count: Int,
+) -> Result(Nil, String) {
+  case exp_child_count == child_count {
+    True -> Ok(Nil)
+    False -> Error("Unexpected number of children")
+  }
+}
+
+pub fn deserialize_all(buf: BitArray) -> Result(TrieNode, String) {
+  case deserialize(buf) {
+    Ok(#(node, <<>>)) -> Ok(node)
+    Ok(_) -> Error("Invalid TrieNode: trailing bytes")
+    Error(err) -> Error(err)
   }
 }

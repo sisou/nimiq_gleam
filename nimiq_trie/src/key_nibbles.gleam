@@ -17,6 +17,10 @@ pub fn root() -> KeyNibbles {
   KeyNibbles(iv.new())
 }
 
+pub fn badbadbad() -> KeyNibbles {
+  KeyNibbles(iv.from_list([0xb, 0xa, 0xd, 0xb, 0xa, 0xd, 0xb, 0xa, 0xd]))
+}
+
 pub fn len(key: KeyNibbles) -> Int {
   iv.length(key.nibbles)
 }
@@ -107,8 +111,8 @@ pub fn common_prefix(key1: KeyNibbles, key2: KeyNibbles) -> KeyNibbles {
 }
 
 pub fn deserialize(buf: BitArray) -> Result(#(KeyNibbles, BitArray), String) {
-  use #(length, rest) <- result.try(serde.deserialize_int(buf, 8))
-  use #(byte_length, rest) <- result.try(serde.deserialize_int(rest, 8))
+  use #(length, rest) <- result.try(serde.deserialize_u8(buf))
+  use #(byte_length, rest) <- result.try(serde.deserialize_u8(rest))
   case True {
     _ if byte_length != { length + 1 } / 2 ->
       Error(
@@ -151,30 +155,26 @@ pub fn deserialize_all(buf: BitArray) -> Result(KeyNibbles, String) {
   }
 }
 
-pub fn serialize(key: KeyNibbles) -> BytesTree {
+pub fn serialize(buf: BytesTree, key: KeyNibbles) -> BytesTree {
   let length = len(key)
   let byte_length = { length + 1 } / 2
 
-  // Using a BitArray as a builder is not as efficient as using a BytesTree, but
-  // BytesTrees cannot append half bytes without padding them in every append() call.
-  let buf =
-    bytes_tree.new()
-    |> serde.serialize_int(length, 8)
-    |> serde.serialize_int(byte_length, 8)
-
-  let bytes = case length {
+  buf
+  |> serde.serialize_u8(length)
+  |> serde.serialize_u8(byte_length)
+  |> serde.serialize_bitarray(case length {
     0 -> <<>>
     _ ->
+      // Using a BitArray as a builder is not as efficient as using a BytesTree, but
+      // BytesTrees cannot append half bytes without padding them in every append() call.
       key.nibbles
       |> iv.fold(<<>>, fn(acc, nibble) { acc |> bit_array.append(<<nibble:4>>) })
       |> bit_array.pad_to_bytes()
-  }
-
-  buf |> serde.serialize_bitarray(bytes)
+  })
 }
 
 pub fn serialize_to_vec(key: KeyNibbles) -> BitArray {
-  key |> serialize() |> bytes_tree.to_bit_array()
+  bytes_tree.new() |> serialize(key) |> bytes_tree.to_bit_array()
 }
 
 pub fn equals(key1: KeyNibbles, key2: KeyNibbles) -> Bool {
