@@ -1,4 +1,4 @@
-import gleam/bytes_builder.{type BytesBuilder}
+import gleam/bit_array
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -39,10 +39,10 @@ pub fn decode(str: String, alphabet: String) -> Result(BitArray, String) {
     |> string.trim()
     |> string.to_graphemes()
     |> list.filter(fn(x) { x != "=" })
-    |> do_decode(string.to_graphemes(alphabet), 0, bytes_builder.new())
+    |> do_decode(string.to_graphemes(alphabet), 0, <<>>)
 
   case decoded {
-    Ok(bytes) -> Ok(bytes_builder.to_bit_array(bytes))
+    Ok(bytes) -> Ok(bytes)
     Error(msg) -> Error(msg)
   }
 }
@@ -51,8 +51,8 @@ fn do_decode(
   chars: List(String),
   alphabet: List(String),
   bit_length: Int,
-  acc: BytesBuilder,
-) -> Result(BytesBuilder, String) {
+  acc: BitArray,
+) -> Result(BitArray, String) {
   let next_bit_length = bit_length + 5
 
   // Go through the characters and decode them into 5-bit numbers
@@ -72,7 +72,7 @@ fn do_decode(
             rest,
             alphabet,
             next_bit_length,
-            bytes_builder.append(acc, <<i:5>>),
+            bit_array.append(acc, <<i:5>>),
           )
         None -> Error("Missing character in alphabet")
       }

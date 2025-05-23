@@ -2,7 +2,7 @@ import account/account_type.{type AccountType}
 import account/address.{type Address}
 import coin.{type Coin, Coin}
 import gleam/bit_array
-import gleam/bytes_builder.{type BytesBuilder}
+import gleam/bytes_tree.{type BytesTree}
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
@@ -198,44 +198,44 @@ pub fn format(tx: Transaction) -> TransactionFormat {
 }
 
 pub fn serialize_content(tx: Transaction) -> BitArray {
-  bytes_builder.new()
+  bytes_tree.new()
   // Recipient data length
-  |> bytes_builder.append(<<bit_array.byte_size(tx.recipient_data):16>>)
+  |> bytes_tree.append(<<bit_array.byte_size(tx.recipient_data):16>>)
   // Recipient data
-  |> bytes_builder.append(tx.recipient_data)
+  |> bytes_tree.append(tx.recipient_data)
   // Sender address
   |> address.serialize(tx.sender)
   // Sender account type
-  |> bytes_builder.append(<<account_type.to_int(tx.sender_type):8>>)
+  |> bytes_tree.append(<<account_type.to_int(tx.sender_type):8>>)
   // Recipient address
   |> address.serialize(tx.recipient)
   // Recipient account type
-  |> bytes_builder.append(<<account_type.to_int(tx.recipient_type):8>>)
+  |> bytes_tree.append(<<account_type.to_int(tx.recipient_type):8>>)
   // Value
-  |> bytes_builder.append(<<tx.value.luna:64>>)
+  |> bytes_tree.append(<<tx.value.luna:64>>)
   // Fee
-  |> bytes_builder.append(<<tx.fee.luna:64>>)
+  |> bytes_tree.append(<<tx.fee.luna:64>>)
   // Validity start height
-  |> bytes_builder.append(<<tx.validity_start_height:32>>)
+  |> bytes_tree.append(<<tx.validity_start_height:32>>)
   // Network ID
-  |> bytes_builder.append(<<network_id.to_int(tx.network_id):8>>)
+  |> bytes_tree.append(<<network_id.to_int(tx.network_id):8>>)
   // Flags
-  |> bytes_builder.append(<<transaction_flags.to_int(tx.flags):8>>)
+  |> bytes_tree.append(<<transaction_flags.to_int(tx.flags):8>>)
   // Sender data
   |> serde.serialize_bytes(tx.sender_data)
   // Convert to bit array
-  |> bytes_builder.to_bit_array()
+  |> bytes_tree.to_bit_array()
 }
 
 pub fn serialize(
-  builder: BytesBuilder,
+  builder: BytesTree,
   tx: Transaction,
-) -> Result(BytesBuilder, String) {
+) -> Result(BytesTree, String) {
   let format = format(tx)
 
   let builder =
     builder
-    |> bytes_builder.append(<<transaction_format.to_int(format):8>>)
+    |> bytes_tree.append(<<transaction_format.to_int(format):8>>)
 
   case format {
     transaction_format.Basic -> {
@@ -245,7 +245,7 @@ pub fn serialize(
 
       let builder =
         builder
-        |> bytes_builder.append(<<
+        |> bytes_tree.append(<<
           signature_proof.make_type_and_flags_byte(signature_proof):8,
         >>)
         // Sender public key
@@ -253,13 +253,13 @@ pub fn serialize(
         // Recipient address
         |> address.serialize(tx.recipient)
         // Value
-        |> bytes_builder.append(<<tx.value.luna:64>>)
+        |> bytes_tree.append(<<tx.value.luna:64>>)
         // Fee
-        |> bytes_builder.append(<<tx.fee.luna:64>>)
+        |> bytes_tree.append(<<tx.fee.luna:64>>)
         // Validity start height
-        |> bytes_builder.append(<<tx.validity_start_height:32>>)
+        |> bytes_tree.append(<<tx.validity_start_height:32>>)
         // Network ID
-        |> bytes_builder.append(<<network_id.to_int(tx.network_id):8>>)
+        |> bytes_tree.append(<<network_id.to_int(tx.network_id):8>>)
         // Signature
         |> signature.serialize(signature_proof.signature)
 
@@ -274,16 +274,16 @@ pub fn serialize(
     transaction_format.Extended -> {
       builder
       |> address.serialize(tx.sender)
-      |> bytes_builder.append(<<account_type.to_int(tx.sender_type):8>>)
+      |> bytes_tree.append(<<account_type.to_int(tx.sender_type):8>>)
       |> serde.serialize_bytes(tx.sender_data)
       |> address.serialize(tx.recipient)
-      |> bytes_builder.append(<<account_type.to_int(tx.recipient_type):8>>)
+      |> bytes_tree.append(<<account_type.to_int(tx.recipient_type):8>>)
       |> serde.serialize_bytes(tx.recipient_data)
-      |> bytes_builder.append(<<tx.value.luna:64>>)
-      |> bytes_builder.append(<<tx.fee.luna:64>>)
-      |> bytes_builder.append(<<tx.validity_start_height:32>>)
-      |> bytes_builder.append(<<network_id.to_int(tx.network_id):8>>)
-      |> bytes_builder.append(<<transaction_flags.to_int(tx.flags):8>>)
+      |> bytes_tree.append(<<tx.value.luna:64>>)
+      |> bytes_tree.append(<<tx.fee.luna:64>>)
+      |> bytes_tree.append(<<tx.validity_start_height:32>>)
+      |> bytes_tree.append(<<network_id.to_int(tx.network_id):8>>)
+      |> bytes_tree.append(<<transaction_flags.to_int(tx.flags):8>>)
       |> serde.serialize_bytes(tx.proof)
       |> Ok()
     }
@@ -291,7 +291,7 @@ pub fn serialize(
 }
 
 pub fn serialize_to_bits(tx: Transaction) -> Result(BitArray, String) {
-  bytes_builder.new() |> serialize(tx) |> result.map(bytes_builder.to_bit_array)
+  bytes_tree.new() |> serialize(tx) |> result.map(bytes_tree.to_bit_array)
 }
 
 pub fn to_hex(tx: Transaction) -> Result(String, String) {

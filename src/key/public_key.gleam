@@ -1,7 +1,7 @@
 import account/address.{type Address}
 import bindings/blake2
 import gleam/bit_array
-import gleam/bytes_builder.{type BytesBuilder}
+import gleam/bytes_tree.{type BytesTree}
 import key/ed25519/public_key as ed25519_public_key
 import transaction/signature_proof_algorithm.{type SignatureProofAlgorithm}
 import utils/misc
@@ -51,10 +51,10 @@ pub fn to_address(key: PublicKey) -> Address {
   address
 }
 
-pub fn serialize(builder: BytesBuilder, key: PublicKey) -> BytesBuilder {
+pub fn serialize(builder: BytesTree, key: PublicKey) -> BytesTree {
   case key {
     EdDsaPublicKey(key) -> builder |> ed25519_public_key.serialize(key)
-    EcDsaPublicKey(buf) -> builder |> bytes_builder.append(buf)
+    EcDsaPublicKey(buf) -> builder |> bytes_tree.append(buf)
   }
 }
 

@@ -1,6 +1,6 @@
 import bindings/bls as native
 import bls/compressed_signature.{type CompressedSignature, CompressedSignature}
-import gleam/bytes_builder.{type BytesBuilder}
+import gleam/bytes_tree.{type BytesTree}
 
 const size = 95
 
@@ -43,8 +43,8 @@ pub fn proof_of_knowledge(secret_key: SecretKey) -> CompressedSignature {
   CompressedSignature(signature)
 }
 
-pub fn serialize(builder: BytesBuilder, secret_key: SecretKey) -> BytesBuilder {
-  builder |> bytes_builder.append(native.secret_key_to_bytes(secret_key.key))
+pub fn serialize(builder: BytesTree, secret_key: SecretKey) -> BytesTree {
+  builder |> bytes_tree.append(native.secret_key_to_bytes(secret_key.key))
 }
 
 pub fn serialize_to_bits(secret_key: SecretKey) -> BitArray {

@@ -1,5 +1,5 @@
 import gleam/bit_array
-import gleam/bytes_builder.{type BytesBuilder}
+import gleam/bytes_tree.{type BytesTree}
 import gleam/float
 import gleam/int
 import gleam/list
@@ -84,13 +84,13 @@ pub fn from_user_friendly_address(str: String) -> Result(Address, String) {
   })
 
   // Calculate and check the checksum
-  let encoded = string.drop_left(normalized, 4)
-  use _ <- result.try(case
-    iban_check(encoded <> string.slice(normalized, 0, 4)) == 1
-  {
-    False -> Error("Invalid address: wrong checksum")
-    True -> Ok(Nil)
-  })
+  let encoded = string.drop_start(normalized, 4)
+  use _ <- result.try(
+    case iban_check(encoded <> string.slice(normalized, 0, 4)) == 1 {
+      False -> Error("Invalid address: wrong checksum")
+      True -> Ok(Nil)
+    },
+  )
 
   case base32.decode(encoded, nimiq_alphabet) {
     Ok(buf) -> deserialize_all(buf)
@@ -106,8 +106,8 @@ pub fn from_string(str: String) -> Result(Address, String) {
   |> result.map_error(fn(_) { "Invalid address: unknown format" })
 }
 
-pub fn serialize(builder: BytesBuilder, address: Address) -> BytesBuilder {
-  builder |> bytes_builder.append(address.buf)
+pub fn serialize(builder: BytesTree, address: Address) -> BytesTree {
+  builder |> bytes_tree.append(address.buf)
 }
 
 pub fn serialize_to_bits(address: Address) -> BitArray {

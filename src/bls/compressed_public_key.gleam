@@ -1,6 +1,6 @@
 import bindings/bls as native
 import bls/secret_key.{type SecretKey}
-import gleam/bytes_builder.{type BytesBuilder}
+import gleam/bytes_tree.{type BytesTree}
 
 const size = 285
 
@@ -37,10 +37,10 @@ pub fn derive_key(public_key: SecretKey) -> CompressedPublicKey {
 }
 
 pub fn serialize(
-  builder: BytesBuilder,
+  builder: BytesTree,
   public_key: CompressedPublicKey,
-) -> BytesBuilder {
-  builder |> bytes_builder.append(native.public_key_to_bytes(public_key.key))
+) -> BytesTree {
+  builder |> bytes_tree.append(native.public_key_to_bytes(public_key.key))
 }
 
 pub fn serialize_to_bits(public_key: CompressedPublicKey) -> BitArray {

@@ -1,5 +1,5 @@
 import gleam/bit_array
-import gleam/bytes_builder.{type BytesBuilder}
+import gleam/bytes_tree.{type BytesTree}
 import key/ed25519/private_key as ed25519_private_key
 import key/ed25519/public_key as ed25519_public_key
 import key/ed25519/signature as ed25519_signature
@@ -49,10 +49,10 @@ fn deserialize_ecdsa(buf: BitArray) -> Result(#(Signature, BitArray), String) {
   }
 }
 
-pub fn serialize(builder: BytesBuilder, sig: Signature) -> BytesBuilder {
+pub fn serialize(builder: BytesTree, sig: Signature) -> BytesTree {
   case sig {
     EdDsaSignature(sig) -> builder |> ed25519_signature.serialize(sig)
-    EcDsaSignature(buf) -> builder |> bytes_builder.append(buf)
+    EcDsaSignature(buf) -> builder |> bytes_tree.append(buf)
   }
 }
 

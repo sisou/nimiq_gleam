@@ -1,6 +1,5 @@
 import gleam/bit_array
-import gleam/bool
-import gleam/bytes_builder.{type BytesBuilder}
+import gleam/bytes_tree.{type BytesTree}
 import gleam/float
 import gleam/int
 import gleam/list
@@ -51,17 +50,17 @@ pub fn deserialize_all(buf: BitArray) -> Result(MerklePath, String) {
   }
 }
 
-pub fn serialize(builder: BytesBuilder, path: MerklePath) -> BytesBuilder {
+pub fn serialize(builder: BytesTree, path: MerklePath) -> BytesTree {
   builder
-  |> bytes_builder.append(<<list.length(path.nodes):8>>)
-  |> bytes_builder.append(do_compress(path.nodes, bytes_builder.new(), 0))
-  |> bytes_builder.append(
+  |> bytes_tree.append(<<list.length(path.nodes):8>>)
+  |> bytes_tree.append(do_compress(path.nodes, <<>>, 0))
+  |> bytes_tree.append(
     path.nodes |> list.map(fn(node) { node.hash }) |> bit_array.concat(),
   )
 }
 
 pub fn serialize_to_bits(path: MerklePath) -> BitArray {
-  bytes_builder.new() |> serialize(path) |> bytes_builder.to_bit_array()
+  bytes_tree.new() |> serialize(path) |> bytes_tree.to_bit_array()
 }
 
 fn deserialize_nodes(
@@ -85,7 +84,7 @@ fn deserialize_nodes(
 
 fn do_compress(
   nodes: List(MerklePathNode),
-  buf: BytesBuilder,
+  buf: BitArray,
   count: Int,
 ) -> BitArray {
   case nodes {
@@ -96,13 +95,18 @@ fn do_compress(
         n -> 8 - n
       }
       buf
-      |> bytes_builder.append(<<0:size(num_padding_bits)>>)
-      |> bytes_builder.to_bit_array()
+      |> bit_array.append(<<0:size(num_padding_bits)>>)
     }
     [node, ..rest] -> {
       do_compress(
         rest,
-        buf |> bytes_builder.append(<<bool.to_int(node.is_left):1>>),
+        buf
+          |> bit_array.append(<<
+            case node.is_left {
+              True -> 1
+              False -> 0
+            }:1,
+          >>),
         count + 1,
       )
     }

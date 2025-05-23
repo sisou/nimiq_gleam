@@ -1,16 +1,15 @@
 import bindings/varint
 import coin.{type Coin, Coin}
 import gleam/bit_array
-import gleam/bool
-import gleam/bytes_builder.{type BytesBuilder}
+import gleam/bytes_tree.{type BytesTree}
 import gleam/string
 
-pub fn serialize_bytes(buf: BytesBuilder, data: BitArray) -> BytesBuilder {
+pub fn serialize_bytes(buf: BytesTree, data: BitArray) -> BytesTree {
   buf
   // Encode the length of the data
-  |> bytes_builder.append(varint.encode(bit_array.byte_size(data)))
+  |> bytes_tree.append(varint.encode(bit_array.byte_size(data)))
   // Append the data
-  |> bytes_builder.append(data)
+  |> bytes_tree.append(data)
 }
 
 pub fn deserialize_bytes(buf: BitArray) -> Result(#(BitArray, BitArray), String) {
@@ -21,8 +20,8 @@ pub fn deserialize_bytes(buf: BitArray) -> Result(#(BitArray, BitArray), String)
   }
 }
 
-pub fn serialize_bitarray(buf: BytesBuilder, data: BitArray) -> BytesBuilder {
-  buf |> bytes_builder.append(data)
+pub fn serialize_bitarray(buf: BytesTree, data: BitArray) -> BytesTree {
+  buf |> bytes_tree.append(data)
 }
 
 pub fn deserialize_bitarray(
@@ -35,12 +34,12 @@ pub fn deserialize_bitarray(
   }
 }
 
-pub fn serialize_string(buf: BytesBuilder, str: String) -> BytesBuilder {
+pub fn serialize_string(buf: BytesTree, str: String) -> BytesTree {
   buf
   // Encode the length of the string
-  |> bytes_builder.append(varint.encode(string.byte_size(str)))
+  |> bytes_tree.append(varint.encode(string.byte_size(str)))
   // Append the string
-  |> bytes_builder.append_string(str)
+  |> bytes_tree.append_string(str)
 }
 
 pub fn deserialize_string(buf: BitArray) -> Result(#(String, BitArray), String) {
@@ -56,9 +55,9 @@ pub fn deserialize_string(buf: BitArray) -> Result(#(String, BitArray), String) 
   }
 }
 
-pub fn serialize_int(buf: BytesBuilder, num: Int, bit_size: Int) -> BytesBuilder {
+pub fn serialize_int(buf: BytesTree, num: Int, bit_size: Int) -> BytesTree {
   buf
-  |> bytes_builder.append(<<num:size(bit_size)>>)
+  |> bytes_tree.append(<<num:size(bit_size)>>)
 }
 
 pub fn deserialize_int(
@@ -71,7 +70,7 @@ pub fn deserialize_int(
   }
 }
 
-pub fn serialize_coin(buf: BytesBuilder, coin: Coin) -> BytesBuilder {
+pub fn serialize_coin(buf: BytesTree, coin: Coin) -> BytesTree {
   serialize_int(buf, coin.luna, 64)
 }
 
@@ -82,8 +81,15 @@ pub fn deserialize_coin(buf: BitArray) -> Result(#(Coin, BitArray), String) {
   }
 }
 
-pub fn serialize_bool(buf: BytesBuilder, value: Bool) -> BytesBuilder {
-  serialize_int(buf, bool.to_int(value), 8)
+pub fn serialize_bool(buf: BytesTree, value: Bool) -> BytesTree {
+  serialize_int(
+    buf,
+    case value {
+      True -> 1
+      False -> 0
+    },
+    8,
+  )
 }
 
 pub fn deserialize_bool(buf: BitArray) -> Result(#(Bool, BitArray), String) {

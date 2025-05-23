@@ -1,6 +1,6 @@
 import bindings/ed25519
 import gleam/bit_array
-import gleam/bytes_builder.{type BytesBuilder}
+import gleam/bytes_tree.{type BytesTree}
 import gleam/result
 import key/ed25519/private_key.{type PrivateKey}
 import utils/misc
@@ -66,8 +66,8 @@ pub fn from_string(str: String) -> Result(PublicKey, String) {
   |> result.map_error(fn(_) { "Invalid public key: unknown format" })
 }
 
-pub fn serialize(builder: BytesBuilder, key: PublicKey) -> BytesBuilder {
-  builder |> bytes_builder.append(key.buf)
+pub fn serialize(builder: BytesTree, key: PublicKey) -> BytesTree {
+  builder |> bytes_tree.append(key.buf)
 }
 
 pub fn serialize_to_bits(key: PublicKey) -> BitArray {

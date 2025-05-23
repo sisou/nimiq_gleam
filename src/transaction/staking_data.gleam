@@ -1,6 +1,6 @@
 import account/address.{type Address}
 import coin.{type Coin}
-import gleam/bytes_builder.{type BytesBuilder}
+import gleam/bytes_tree.{type BytesTree}
 import gleam/int
 import gleam/option.{type Option, None, Some}
 import gleam/pair
@@ -124,14 +124,14 @@ pub fn deserialize(
       use #(has_new_reward_address, rest) <- result.try(serde.deserialize_bool(
         rest,
       ))
-      use #(new_reward_address, rest) <- result.try(case
-        has_new_reward_address
-      {
-        False -> Ok(#(None, rest))
-        True ->
-          address.deserialize(rest)
-          |> result.map(pair.map_first(_, Some))
-      })
+      use #(new_reward_address, rest) <- result.try(
+        case has_new_reward_address {
+          False -> Ok(#(None, rest))
+          True ->
+            address.deserialize(rest)
+            |> result.map(pair.map_first(_, Some))
+        },
+      )
       use #(has_new_signal_data, rest) <- result.try(serde.deserialize_bool(
         rest,
       ))
@@ -154,14 +154,14 @@ pub fn deserialize(
       use #(has_new_proof_of_knowledge, rest) <- result.try(
         serde.deserialize_bool(rest),
       )
-      use #(new_proof_of_knowledge, rest) <- result.try(case
-        has_new_proof_of_knowledge
-      {
-        False -> Ok(#(None, rest))
-        True ->
-          serde.deserialize_bitarray(rest, 95)
-          |> result.map(pair.map_first(_, Some))
-      })
+      use #(new_proof_of_knowledge, rest) <- result.try(
+        case has_new_proof_of_knowledge {
+          False -> Ok(#(None, rest))
+          True ->
+            serde.deserialize_bitarray(rest, 95)
+            |> result.map(pair.map_first(_, Some))
+        },
+      )
       use #(proof, rest) <- result.try(signature_proof.deserialize(rest))
 
       Ok(#(
@@ -257,10 +257,7 @@ pub fn deserialize_all(buf: BitArray) -> Result(IncomingStakingData, String) {
   }
 }
 
-pub fn serialize(
-  builder: BytesBuilder,
-  data: IncomingStakingData,
-) -> BytesBuilder {
+pub fn serialize(builder: BytesTree, data: IncomingStakingData) -> BytesTree {
   case data {
     CreateValidator(
       signing_key,
@@ -397,7 +394,7 @@ pub fn serialize(
 }
 
 pub fn serialize_to_bits(data: IncomingStakingData) -> BitArray {
-  bytes_builder.new() |> serialize(data) |> bytes_builder.to_bit_array()
+  bytes_tree.new() |> serialize(data) |> bytes_tree.to_bit_array()
 }
 
 pub fn to_hex(data: IncomingStakingData) -> String {

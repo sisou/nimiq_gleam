@@ -1,4 +1,4 @@
-import gleam/bytes_builder.{type BytesBuilder}
+import gleam/bytes_tree.{type BytesTree}
 import gleam/int
 import gleam/option.{type Option, None, Some}
 import gleam/result
@@ -118,10 +118,10 @@ pub fn make_type_and_flags_byte(proof: SignatureProof) -> Int {
   int.bitwise_or(int.bitwise_shift_left(flags, 4), signature_alg)
 }
 
-pub fn serialize(builder: BytesBuilder, proof: SignatureProof) -> BytesBuilder {
+pub fn serialize(builder: BytesTree, proof: SignatureProof) -> BytesTree {
   let builder =
     builder
-    |> bytes_builder.append(<<make_type_and_flags_byte(proof)>>)
+    |> bytes_tree.append(<<make_type_and_flags_byte(proof)>>)
     |> public_key.serialize(proof.public_key)
     |> merkle_path.serialize(proof.merkle_path)
     |> signature.serialize(proof.signature)
@@ -133,7 +133,7 @@ pub fn serialize(builder: BytesBuilder, proof: SignatureProof) -> BytesBuilder {
 }
 
 pub fn serialize_to_bits(proof: SignatureProof) -> BitArray {
-  bytes_builder.new() |> serialize(proof) |> bytes_builder.to_bit_array()
+  bytes_tree.new() |> serialize(proof) |> bytes_tree.to_bit_array()
 }
 
 pub fn deserialize_type_and_flags_byte(
@@ -177,9 +177,9 @@ pub fn deserialize_webauthn_fields(
 }
 
 pub fn serialize_webauthn_fields(
-  builder: BytesBuilder,
+  builder: BytesTree,
   fields: WebauthnFields,
-) -> BytesBuilder {
+) -> BytesTree {
   builder
   |> serde.serialize_string(fields.origin_json_str)
   |> serde.serialize_bool(fields.has_cross_origin_field)

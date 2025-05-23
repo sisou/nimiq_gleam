@@ -1,15 +1,15 @@
 import bindings/bls as native
-import gleam/bytes_builder.{type BytesBuilder}
+import gleam/bytes_tree.{type BytesTree}
 
 pub type CompressedSignature {
   CompressedSignature(sig: native.Signature)
 }
 
 pub fn serialize(
-  builder: BytesBuilder,
+  builder: BytesTree,
   signature: CompressedSignature,
-) -> BytesBuilder {
-  builder |> bytes_builder.append(native.signature_to_bytes(signature.sig))
+) -> BytesTree {
+  builder |> bytes_tree.append(native.signature_to_bytes(signature.sig))
 }
 
 pub fn serialize_to_bits(signature: CompressedSignature) -> BitArray {
