@@ -1,5 +1,6 @@
 import gleam/bytes_tree.{type BytesTree}
 import gleam/result
+
 import utils/serde
 
 pub type Account {

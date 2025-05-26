@@ -1,5 +1,6 @@
 import gleam/option.{None, Some}
 import gleeunit/should
+
 import key_nibbles
 import utils.{unwrap}
 

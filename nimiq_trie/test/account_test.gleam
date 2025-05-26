@@ -1,7 +1,8 @@
-import account
 import gleam/bit_array
 import gleam/string
 import gleeunit/should
+
+import account
 
 pub fn serialize_account_test() {
   account.Basic(balance: 100_000)

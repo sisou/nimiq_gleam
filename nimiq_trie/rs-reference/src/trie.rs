@@ -56,40 +56,61 @@ pub fn serialize_trie() {
     .for_each(|node: Account| {
         println!("Trie node: {:?}", node);
     });
+}
 
-    // // assert_eq!(trie.count_nodes(&txn), (2, 0, 3));
-    // assert_eq!(trie.get(&txn, &key_1).expect("complete trie"), Some(80085));
-    // assert_eq!(trie.get(&txn, &key_2).expect("complete trie"), Some(999));
-    // assert_eq!(trie.get(&txn, &key_3).expect("complete trie"), Some(1337));
-    // assert_eq!(trie.get(&txn, &key_4).expect("complete trie"), None::<i32>);
+pub fn get_put_remove_works() {
+    let key_1 = "413f22b3e".parse().unwrap();
+    let key_2 = "413b39931".parse().unwrap();
+    let key_3 = "413b397fa".parse().unwrap();
+    let key_4 = "cfb986f5a".parse().unwrap();
 
-    // trie.remove(&mut txn, &key_4);
-    // // assert_eq!(trie.count_nodes(&txn), (2, 0, 3));
-    // assert_eq!(trie.get(&txn, &key_1).expect("complete trie"), Some(80085));
-    // assert_eq!(trie.get(&txn, &key_2).expect("complete trie"), Some(999));
-    // assert_eq!(trie.get(&txn, &key_3).expect("complete trie"), Some(1337));
+    declare_table!(TestTrie, "database", KeyNibbles => TrieNode);
+    let env = MdbxDatabase::new_volatile(Default::default()).unwrap();
+    let trie = MerkleRadixTrie::new(&env, TestTrie);
+    let mut raw_txn = env.write_transaction();
+    let mut txn: WriteTransactionProxy = (&mut raw_txn).into();
 
-    // trie.remove(&mut txn, &key_1);
-    // // assert_eq!(trie.count_nodes(&txn), (1, 0, 2));
-    // assert_eq!(trie.get(&txn, &key_1).expect("complete trie"), None::<i32>);
-    // assert_eq!(trie.get(&txn, &key_2).expect("complete trie"), Some(999));
-    // assert_eq!(trie.get(&txn, &key_3).expect("complete trie"), Some(1337));
+    assert_eq!(trie.count_nodes(&txn), (0, 0, 0));
 
-    // trie.remove(&mut txn, &key_2);
-    // // assert_eq!(trie.count_nodes(&txn), (0, 0, 1));
-    // assert_eq!(trie.get(&txn, &key_1).expect("complete trie"), None::<i32>);
-    // assert_eq!(trie.get(&txn, &key_2).expect("complete trie"), None::<i32>);
-    // assert_eq!(trie.get(&txn, &key_3).expect("complete trie"), Some(1337));
+    trie.put(&mut txn, &key_1, 80085).expect("complete trie");
+    assert_eq!(trie.count_nodes(&txn), (0, 0, 1));
+    trie.put(&mut txn, &key_2, 999).expect("complete trie");
+    assert_eq!(trie.count_nodes(&txn), (1, 0, 2));
+    trie.put(&mut txn, &key_3, 1337).expect("complete trie");
 
-    // trie.remove(&mut txn, &key_3);
-    // // assert_eq!(trie.count_nodes(&txn), (0, 0, 0));
-    // assert_eq!(trie.get(&txn, &key_1).expect("complete trie"), None::<i32>);
-    // assert_eq!(trie.get(&txn, &key_2).expect("complete trie"), None::<i32>);
-    // assert_eq!(trie.get(&txn, &key_3).expect("complete trie"), None::<i32>);
+    assert_eq!(trie.count_nodes(&txn), (2, 0, 3));
+    assert_eq!(trie.get(&txn, &key_1).expect("complete trie"), Some(80085));
+    assert_eq!(trie.get(&txn, &key_2).expect("complete trie"), Some(999));
+    assert_eq!(trie.get(&txn, &key_3).expect("complete trie"), Some(1337));
+    assert_eq!(trie.get(&txn, &key_4).expect("complete trie"), None::<i32>);
 
-    // trie.remove(&mut txn, &KeyNibbles::ROOT);
-    // // assert_eq!(trie.count_nodes(&txn), (0, 0, 0));
-    // assert_eq!(trie.get(&txn, &key_1).expect("complete trie"), None::<i32>);
-    // assert_eq!(trie.get(&txn, &key_2).expect("complete trie"), None::<i32>);
-    // assert_eq!(trie.get(&txn, &key_3).expect("complete trie"), None::<i32>);
+    trie.remove(&mut txn, &key_4);
+    assert_eq!(trie.count_nodes(&txn), (2, 0, 3));
+    assert_eq!(trie.get(&txn, &key_1).expect("complete trie"), Some(80085));
+    assert_eq!(trie.get(&txn, &key_2).expect("complete trie"), Some(999));
+    assert_eq!(trie.get(&txn, &key_3).expect("complete trie"), Some(1337));
+
+    trie.remove(&mut txn, &key_1);
+    assert_eq!(trie.count_nodes(&txn), (1, 0, 2));
+    assert_eq!(trie.get(&txn, &key_1).expect("complete trie"), None::<i32>);
+    assert_eq!(trie.get(&txn, &key_2).expect("complete trie"), Some(999));
+    assert_eq!(trie.get(&txn, &key_3).expect("complete trie"), Some(1337));
+
+    trie.remove(&mut txn, &key_2);
+    assert_eq!(trie.count_nodes(&txn), (0, 0, 1));
+    assert_eq!(trie.get(&txn, &key_1).expect("complete trie"), None::<i32>);
+    assert_eq!(trie.get(&txn, &key_2).expect("complete trie"), None::<i32>);
+    assert_eq!(trie.get(&txn, &key_3).expect("complete trie"), Some(1337));
+
+    trie.remove(&mut txn, &key_3);
+    assert_eq!(trie.count_nodes(&txn), (0, 0, 0));
+    assert_eq!(trie.get(&txn, &key_1).expect("complete trie"), None::<i32>);
+    assert_eq!(trie.get(&txn, &key_2).expect("complete trie"), None::<i32>);
+    assert_eq!(trie.get(&txn, &key_3).expect("complete trie"), None::<i32>);
+
+    trie.remove(&mut txn, &KeyNibbles::ROOT);
+    assert_eq!(trie.count_nodes(&txn), (0, 0, 0));
+    assert_eq!(trie.get(&txn, &key_1).expect("complete trie"), None::<i32>);
+    assert_eq!(trie.get(&txn, &key_2).expect("complete trie"), None::<i32>);
+    assert_eq!(trie.get(&txn, &key_3).expect("complete trie"), None::<i32>);
 }

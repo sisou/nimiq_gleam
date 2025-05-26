@@ -1,11 +1,12 @@
-import blake2b
 import gleam/bit_array
 import gleam/option.{None, Some}
 import gleam/result
 import gleam/string
 import gleeunit/should
+
+import blake2b
 import key_nibbles
-import trie/trie
+import trie/trie_error
 import trie/trie_node.{TrieNode}
 import utils
 
@@ -35,7 +36,7 @@ pub fn child_index_test() {
   let child_key_5 = key_nibbles.from_str("c0b986d50") |> utils.unwrap()
   should.equal(
     branch_node |> trie_node.child_index(child_key_5),
-    Error(trie.WrongPrefix),
+    Error(trie_error.WrongPrefix),
   )
 }
 
@@ -95,13 +96,13 @@ pub fn child_test() {
 
   should.equal(
     leaf_node |> trie_node.child(child_key_2) |> result.map(fn(c) { c.hash }),
-    Error(trie.ChildDoesNotExist),
+    Error(trie_error.ChildDoesNotExist),
   )
 
   let child_key_5 = key_nibbles.from_str("c0b986d50") |> utils.unwrap()
   should.equal(
     branch_node |> trie_node.child(child_key_5) |> result.map(fn(c) { c.hash }),
-    Error(trie.WrongPrefix),
+    Error(trie_error.WrongPrefix),
   )
 }
 
@@ -167,13 +168,13 @@ pub fn child_key_test() {
   )
   should.equal(
     leaf_node |> trie_node.child_key(child_key_2),
-    Error(trie.ChildDoesNotExist),
+    Error(trie_error.ChildDoesNotExist),
   )
 
   let child_key_5 = key_nibbles.from_str("c0b986d50") |> utils.unwrap()
   should.equal(
     branch_node |> trie_node.child_key(child_key_5),
-    Error(trie.WrongPrefix),
+    Error(trie_error.WrongPrefix),
   )
 }
 
@@ -209,25 +210,25 @@ pub fn put_remove_child_test() {
   let node = node |> trie_node.remove_child(child_key_1) |> utils.unwrap()
   should.equal(
     node |> trie_node.child(child_key_1),
-    Error(trie.ChildDoesNotExist),
+    Error(trie_error.ChildDoesNotExist),
   )
 
   let node = node |> trie_node.remove_child(child_key_2) |> utils.unwrap()
   should.equal(
     node |> trie_node.child(child_key_2),
-    Error(trie.ChildDoesNotExist),
+    Error(trie_error.ChildDoesNotExist),
   )
 
   let node = node |> trie_node.remove_child(child_key_3) |> utils.unwrap()
   should.equal(
     node |> trie_node.child(child_key_3),
-    Error(trie.ChildDoesNotExist),
+    Error(trie_error.ChildDoesNotExist),
   )
 
   let node = node |> trie_node.remove_child(child_key_4) |> utils.unwrap()
   should.equal(
     node |> trie_node.child(child_key_4),
-    Error(trie.ChildDoesNotExist),
+    Error(trie_error.ChildDoesNotExist),
   )
 
   should.equal(node.value, Some(<<66>>))
@@ -238,24 +239,27 @@ pub fn put_value_test() {
 
   let leaf_node = trie_node.new_leaf(key, <<66>>)
   should.equal(leaf_node.value, Some(<<66>>))
-  let leaf_node = leaf_node |> trie_node.put_value(<<99>>) |> utils.unwrap()
+  let #(leaf_node, _prev_value) =
+    leaf_node |> trie_node.put_value(<<99>>) |> utils.unwrap()
   should.equal(leaf_node.value, Some(<<99>>))
 
   let hybrid_node = trie_node.new_leaf(key, <<66>>)
   should.equal(hybrid_node.value, Some(<<66>>))
-  let hybrid_node = hybrid_node |> trie_node.put_value(<<99>>) |> utils.unwrap()
+  let #(hybrid_node, _prev_value) =
+    hybrid_node |> trie_node.put_value(<<99>>) |> utils.unwrap()
   should.equal(hybrid_node.value, Some(<<99>>))
 
   let branch_node = trie_node.new_empty(key)
   should.equal(branch_node.value, None)
-  let branch_node = branch_node |> trie_node.put_value(<<99>>) |> utils.unwrap()
+  let #(branch_node, _prev_value) =
+    branch_node |> trie_node.put_value(<<99>>) |> utils.unwrap()
   should.equal(branch_node.value, Some(<<99>>))
 
   let root_node = trie_node.new_root()
   should.equal(root_node.value, None)
   should.equal(
     root_node |> trie_node.put_value(<<99>>),
-    Error(trie.RootCantHaveValue),
+    Error(trie_error.RootCantHaveValue),
   )
   should.equal(root_node.value, None)
 }
@@ -306,12 +310,25 @@ pub fn hash_test() {
 
   should.equal(
     branch_node
-      |> trie_node.hash()
-      |> option.map(fn(h) {
-        h |> bit_array.base16_encode() |> string.lowercase()
-      }),
+      |> trie_node.hash_assert()
+      |> bit_array.base16_encode()
+      |> string.lowercase(),
     // This hash was generated in rs-reference
-    Some("d94a2c15ad309f8ca8802da6ca4f482f9d40ca9fd2646c12b783acba70a2807c"),
+    "d94a2c15ad309f8ca8802da6ca4f482f9d40ca9fd2646c12b783acba70a2807c",
+  )
+
+  let assert Ok(key) =
+    key_nibbles.from_str("e072fc4ad193341cb71e2547f30279999962d26c")
+  let assert Ok(value) = bit_array.base16_decode("0000000000000186a0")
+  let leaf_node = trie_node.new_leaf(key, value)
+
+  should.equal(
+    leaf_node
+      |> trie_node.hash_assert()
+      |> bit_array.base16_encode()
+      |> string.lowercase(),
+    // This hash was generated in rs-reference
+    "ff95a8e7a35983fea7b44610136f00a20d4d00af0e46dd49748a35f6d5dad634",
   )
 }
 
@@ -404,6 +421,6 @@ pub fn deserialize_test() {
   let child_key_5 = key_nibbles.from_str("c0b986d50") |> utils.unwrap()
   should.equal(
     branch_node |> trie_node.child(child_key_5) |> result.map(fn(c) { c.hash }),
-    Error(trie.WrongPrefix),
+    Error(trie_error.WrongPrefix),
   )
 }

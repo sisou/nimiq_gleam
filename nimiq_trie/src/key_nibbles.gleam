@@ -6,7 +6,9 @@ import gleam/list
 import gleam/option.{type Option, None}
 import gleam/result
 import gleam/string
+
 import iv
+
 import utils/serde
 
 pub type KeyNibbles {
@@ -91,7 +93,7 @@ pub fn suffix(key: KeyNibbles, start: Int) -> KeyNibbles {
 }
 
 pub fn is_prefix_of(prefix check: KeyNibbles, of base: KeyNibbles) -> Bool {
-  case iv.slice(base.nibbles, 0, len(check)) {
+  case base.nibbles |> iv.slice(0, len(check)) {
     Ok(slice) -> iv.equal(slice, check.nibbles)
     _ -> False
   }
@@ -108,6 +110,29 @@ pub fn common_prefix(key1: KeyNibbles, key2: KeyNibbles) -> KeyNibbles {
     Ok(index) -> slice(key1, 0, index)
     _ -> key1
   }
+}
+
+pub fn serialize(buf: BytesTree, key: KeyNibbles) -> BytesTree {
+  let length = len(key)
+  let byte_length = { length + 1 } / 2
+
+  buf
+  |> serde.serialize_u8(length)
+  |> serde.serialize_u8(byte_length)
+  |> serde.serialize_bitarray(case length {
+    0 -> <<>>
+    _ ->
+      // Using a BitArray as a builder is not as efficient as using a BytesTree, but
+      // BytesTrees cannot append half bytes without padding them in every append() call.
+      // TODO: Optimize by using pairs of nibbles and bitwise adding them, to be able to use bytes_tree with full bytes.
+      key.nibbles
+      |> iv.fold(<<>>, fn(acc, nibble) { acc |> bit_array.append(<<nibble:4>>) })
+      |> bit_array.pad_to_bytes()
+  })
+}
+
+pub fn serialize_to_vec(key: KeyNibbles) -> BitArray {
+  bytes_tree.new() |> serialize(key) |> bytes_tree.to_bit_array()
 }
 
 pub fn deserialize(buf: BitArray) -> Result(#(KeyNibbles, BitArray), String) {
@@ -153,28 +178,6 @@ pub fn deserialize_all(buf: BitArray) -> Result(KeyNibbles, String) {
     Ok(_) -> Error("Invalid KeyNibbles: trailing bytes")
     Error(err) -> Error(err)
   }
-}
-
-pub fn serialize(buf: BytesTree, key: KeyNibbles) -> BytesTree {
-  let length = len(key)
-  let byte_length = { length + 1 } / 2
-
-  buf
-  |> serde.serialize_u8(length)
-  |> serde.serialize_u8(byte_length)
-  |> serde.serialize_bitarray(case length {
-    0 -> <<>>
-    _ ->
-      // Using a BitArray as a builder is not as efficient as using a BytesTree, but
-      // BytesTrees cannot append half bytes without padding them in every append() call.
-      key.nibbles
-      |> iv.fold(<<>>, fn(acc, nibble) { acc |> bit_array.append(<<nibble:4>>) })
-      |> bit_array.pad_to_bytes()
-  })
-}
-
-pub fn serialize_to_vec(key: KeyNibbles) -> BitArray {
-  bytes_tree.new() |> serialize(key) |> bytes_tree.to_bit_array()
 }
 
 pub fn equals(key1: KeyNibbles, key2: KeyNibbles) -> Bool {

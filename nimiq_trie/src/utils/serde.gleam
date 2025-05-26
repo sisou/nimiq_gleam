@@ -1,6 +1,7 @@
-import bindings/varint
 import gleam/bit_array
 import gleam/bytes_tree.{type BytesTree}
+
+import bindings/varint
 
 pub fn serialize_bytes(buf: BytesTree, data: BitArray) -> BytesTree {
   buf

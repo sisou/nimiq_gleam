@@ -1,13 +1,15 @@
-import blake2b
 import gleam/bytes_tree.{type BytesTree}
 import gleam/int
 import gleam/io
 import gleam/option.{type Option, None, Some}
 import gleam/result
+
 import iv
+
+import blake2b
 import key_nibbles.{type KeyNibbles}
 import trie/root_data.{type RootData, RootData}
-import trie/trie
+import trie/trie_error.{type TrieError}
 import trie/trie_node_child.{type TrieNodeChild, TrieNodeChild}
 import utils/serde
 
@@ -30,7 +32,7 @@ pub type TrieNode {
   )
 }
 
-pub type TrieNodeType {
+pub type TrieNodeKind {
   Root
   Branch
   Hybrid
@@ -74,7 +76,7 @@ pub fn has_children(node: TrieNode) -> Bool {
   |> iv.any(fn(child) { child |> option.is_some() })
 }
 
-pub fn kind(node: TrieNode) -> Option(TrieNodeType) {
+pub fn kind(node: TrieNode) -> Option(TrieNodeKind) {
   case is_root(node), has_children(node), option.is_some(node.value) {
     False, False, False -> None
     False, False, True -> Some(Leaf)
@@ -90,7 +92,7 @@ pub fn kind(node: TrieNode) -> Option(TrieNodeType) {
 pub fn child_index(
   node: TrieNode,
   child_prefix: KeyNibbles,
-) -> Result(Int, trie.TrieError) {
+) -> Result(Int, TrieError) {
   case node.key |> key_nibbles.is_prefix_of(child_prefix) {
     False -> {
       io.println_error(
@@ -100,16 +102,16 @@ pub fn child_index(
         <> node.key |> key_nibbles.to_string()
         <> "!",
       )
-      Error(trie.WrongPrefix)
+      Error(trie_error.WrongPrefix)
     }
     True -> {
       // Key length has to be smaller or equal to the child prefix length, so this will only panic
       // when `child_prefix` has the same length as `self.key()`.
       // PITODO: return error instead of unwrapping
-      case child_prefix |> key_nibbles.get(node.key |> key_nibbles.len()) {
-        Some(index) -> Ok(index)
-        None -> panic as "Child prefix length is equal to the node key length"
-      }
+      let assert Some(index) =
+        child_prefix |> key_nibbles.get(node.key |> key_nibbles.len())
+        as "Child prefix length is equal to the node key length"
+      Ok(index)
     }
   }
 }
@@ -118,13 +120,13 @@ pub fn child_index(
 pub fn child(
   node: TrieNode,
   child_prefix: KeyNibbles,
-) -> Result(TrieNodeChild, trie.TrieError) {
+) -> Result(TrieNodeChild, TrieError) {
   node
   |> child_index(child_prefix)
   |> result.map(fn(index) {
     case node.children |> iv.get(index) {
       Ok(Some(child)) -> Ok(child)
-      _ -> Error(trie.ChildDoesNotExist)
+      _ -> Error(trie_error.ChildDoesNotExist)
     }
   })
   |> result.flatten()
@@ -133,7 +135,7 @@ pub fn child(
 pub fn child_key(
   node: TrieNode,
   child_prefix: KeyNibbles,
-) -> Result(KeyNibbles, trie.TrieError) {
+) -> Result(KeyNibbles, TrieError) {
   node
   |> child(child_prefix)
   |> result.map(fn(child) { child |> trie_node_child.key(node.key) })
@@ -144,53 +146,50 @@ pub fn put_child(
   node: TrieNode,
   child_key: KeyNibbles,
   child_hash: BitArray,
-) -> Result(TrieNode, trie.TrieError) {
+) -> Result(TrieNode, TrieError) {
   use idx <- result.try(node |> child_index(child_key))
   let suffix = child_key |> key_nibbles.suffix(node.key |> key_nibbles.len())
   node.children
   |> iv.set(idx, Some(TrieNodeChild(suffix:, hash: child_hash)))
   |> result.map(fn(children) { TrieNode(..node, children:) })
-  |> result.replace_error(trie.ChildDoesNotExist)
+  |> result.replace_error(trie_error.ChildDoesNotExist)
 }
 
 pub fn put_child_no_hash(
   node: TrieNode,
   child_key: KeyNibbles,
-) -> Result(TrieNode, trie.TrieError) {
-  node |> put_child(child_key, <<>>)
+) -> Result(TrieNode, TrieError) {
+  node |> put_child(child_key, blake2b.default)
 }
 
 /// Removes the current node's child with the given prefix.
 pub fn remove_child(
   node: TrieNode,
   child_prefix: KeyNibbles,
-) -> Result(TrieNode, trie.TrieError) {
+) -> Result(TrieNode, TrieError) {
   use idx <- result.try(node |> child_index(child_prefix))
   node.children
   |> iv.set(idx, None)
   |> result.map(fn(children) { TrieNode(..node, children:) })
-  |> result.replace_error(trie.ChildDoesNotExist)
+  |> result.replace_error(trie_error.ChildDoesNotExist)
 }
 
 pub fn put_value(
   node: TrieNode,
   value: BitArray,
-) -> Result(TrieNode, trie.TrieError) {
+) -> Result(#(TrieNode, Option(BitArray)), TrieError) {
   case is_root(node) {
-    True -> Error(trie.RootCantHaveValue)
-    False -> TrieNode(..node, value: Some(value)) |> Ok
+    True -> Error(trie_error.RootCantHaveValue)
+    False -> #(TrieNode(..node, value: Some(value)), node.value) |> Ok
   }
 }
 
+pub fn take_value(node: TrieNode) -> #(TrieNode, Option(BitArray)) {
+  #(TrieNode(..node, value: None), node.value)
+}
+
 pub fn iter_children(node: TrieNode) -> iv.Array(TrieNodeChild) {
-  node.children
-  |> iv.filter(fn(child) { child |> option.is_some() })
-  |> iv.map(fn(child) {
-    case child {
-      Some(child) -> child
-      None -> panic as "Child cannot not be None"
-    }
-  })
+  node.children |> iv.filter_map(option.to_result(_, Nil))
 }
 
 fn can_hash(node: TrieNode) -> Bool {
@@ -211,7 +210,7 @@ pub fn hash(node: TrieNode) -> Option(BitArray) {
           False, Some(val) -> {
             hasher
             |> serde.serialize_u8(1)
-            |> serde.serialize_bitarray(val)
+            |> serde.serialize_bytes(val)
           }
           True, Some(val) -> {
             let val_hash = val |> blake2b.hash()
@@ -222,18 +221,16 @@ pub fn hash(node: TrieNode) -> Option(BitArray) {
         }
         |> serialize_children(node.children)
 
-      Some(blake2b.hash(hasher |> bytes_tree.to_bit_array()))
+      Some(hasher |> bytes_tree.to_bit_array() |> blake2b.hash())
     }
     False -> None
   }
 }
 
 pub fn hash_assert(node: TrieNode) -> BitArray {
-  case hash(node) {
-    Some(hash) -> hash
-    None ->
-      panic as "can only hash TrieNode with complete information about children"
-  }
+  let assert Some(hash) = hash(node)
+    as "can only hash TrieNode with complete information about children"
+  hash
 }
 
 pub fn serialize(to buf: BytesTree, node node: TrieNode) -> BytesTree {

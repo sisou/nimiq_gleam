@@ -1,6 +1,7 @@
-import gleam/bit_array
+import blake2b
 import gleam/bytes_tree.{type BytesTree}
 import gleam/result
+
 import key_nibbles.{type KeyNibbles}
 import utils/serde
 
@@ -10,23 +11,26 @@ pub type TrieNodeChild {
   TrieNodeChild(
     /// The suffix of this child.
     suffix: KeyNibbles,
-    /// An empty bit array (the `<<>>` value) marks an uncomputed child hash.
+    /// An all-zero bit array (the `blake2b.default` value) marks an uncomputed child hash.
     hash: BitArray,
   )
 }
 
 pub fn has_hash(child: TrieNodeChild) -> Bool {
-  child.hash |> bit_array.bit_size() > 0
+  child.hash != blake2b.default
 }
 
-pub fn key(child: TrieNodeChild, parent_key: KeyNibbles) -> KeyNibbles {
+pub fn key(
+  child: TrieNodeChild,
+  parent_key parent_key: KeyNibbles,
+) -> KeyNibbles {
   parent_key |> key_nibbles.add(child.suffix)
 }
 
 pub fn serialize(to buf: BytesTree, child child: TrieNodeChild) -> BytesTree {
   buf
   |> key_nibbles.serialize(child.suffix)
-  |> bytes_tree.append(child.hash)
+  |> serde.serialize_bitarray(child.hash)
 }
 
 pub fn serialize_to_vec(child: TrieNodeChild) -> BitArray {
