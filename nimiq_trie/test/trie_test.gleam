@@ -1,6 +1,7 @@
 import gleam/bit_array
 import gleam/option.{None, Some}
 import gleam/string
+import gleam/yielder
 import gleeunit/should
 
 import account
@@ -216,4 +217,45 @@ pub fn can_handle_hybrid_node_with_one_child_test() {
   should.equal(original |> trie.count_nodes(), #(0, 0, 1))
   let original = original |> trie.remove(key_1)
   should.equal(original |> trie.count_nodes(), #(0, 0, 0))
+}
+
+pub fn can_iterate_over_nodes_test() {
+  let assert Ok(key_1) =
+    key_nibbles.from_str("0000000000000000000000000000000000000000")
+  let assert Ok(key_2) =
+    key_nibbles.from_str("0000000000000000001000000000000000000000")
+  let assert Ok(key_3) =
+    key_nibbles.from_str("0000000000000000000000000000002000000000")
+  let assert Ok(key_4) =
+    key_nibbles.from_str("0000000300000000000000000000000000000000")
+
+  let trie =
+    trie.new(fn(num: Int) { <<num:32>> }, fn(bytes: BitArray) {
+      case bytes {
+        <<num:32>> -> num
+        _ -> panic as "Deserialization failed"
+      }
+    })
+
+  let trie = trie |> trie.put(key_1, 1)
+  let trie = trie |> trie.put(key_4, 4)
+  let trie = trie |> trie.put(key_2, 2)
+  let trie = trie |> trie.put(key_3, 3)
+
+  let assert Ok(start_key) =
+    key_nibbles.from_str("0000000000000000000000000000000000000000")
+  let assert Ok(end_key) =
+    key_nibbles.from_str("ffffffffffffffffffffffffffffffffffffffff")
+
+  let iterator = trie |> trie.iter_nodes(start_key, end_key)
+
+  let assert yielder.Next(next, iterator) = iterator |> yielder.step()
+  should.equal(next, 1)
+  let assert yielder.Next(next, iterator) = iterator |> yielder.step()
+  should.equal(next, 3)
+  let assert yielder.Next(next, iterator) = iterator |> yielder.step()
+  should.equal(next, 2)
+  let assert yielder.Next(next, iterator) = iterator |> yielder.step()
+  should.equal(next, 4)
+  let assert yielder.Done = iterator |> yielder.step()
 }

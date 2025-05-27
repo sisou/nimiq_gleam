@@ -1,10 +1,13 @@
+import gleam/bit_array
 import gleam/bool
 import gleam/dict.{type Dict}
 import gleam/io
 import gleam/list
 import gleam/option.{type Option, None, Some}
+import gleam/order
 import gleam/result
 import gleam/string
+import gleam/yielder.{type Yielder}
 
 import iv
 
@@ -843,6 +846,7 @@ fn update_hashes(
     }
   }
 }
+
 // /// Returns the last key containing a value before the given key.
 // fn get_predecessor(
 //   trie: MerkleRadixTrie(data),
@@ -860,3 +864,45 @@ fn update_hashes(
 // ) -> List(TrieNode) {
 //   todo
 // }
+
+/// This iterator is meant to start at `start_key` and finish at `end_key`, both of these are inclusive.
+pub fn iter_nodes(
+  trie: MerkleRadixTrie(data),
+  start_key start_key: KeyNibbles,
+  end_key end_key: KeyNibbles,
+) -> Yielder(data) {
+  let assert True =
+    start_key |> key_nibbles.len() == end_key |> key_nibbles.len()
+    as "Start and end keys should have the same length"
+
+  let start_key = start_key |> key_nibbles.serialize_to_vec()
+  let end_key = end_key |> key_nibbles.serialize_to_vec()
+
+  let keys =
+    trie.table
+    |> dict.keys()
+    |> list.filter(fn(key) {
+      {
+        { key |> bit_array.compare(start_key) == order.Gt }
+        || { key |> bit_array.compare(start_key) == order.Eq }
+      }
+      && {
+        { key |> bit_array.compare(end_key) == order.Lt }
+        || { key |> bit_array.compare(end_key) == order.Eq }
+      }
+    })
+    |> list.sort(bit_array.compare)
+
+  yielder.unfold(keys, fn(acc) {
+    case acc {
+      [] -> yielder.Done
+      [key, ..rest] -> {
+        let assert Ok(key) = key_nibbles.deserialize_all(key)
+        let assert Some(node) = trie |> get_node(key)
+        let assert Some(value) = node.value
+        let value = value |> trie.deserializer()
+        yielder.Next(value, rest)
+      }
+    }
+  })
+}
