@@ -5,6 +5,7 @@ import gleam/yielder
 import gleeunit/should
 
 import account
+import backend
 import key_nibbles
 import trie/trie
 
@@ -17,7 +18,7 @@ pub fn simple_trie_test() {
     key_nibbles.from_str("e072fc4ad193341cb71e2547f30279999962d26c")
 
   let trie =
-    trie.new(account.serialize_to_vec, fn(bytes: BitArray) {
+    trie.new(backend.memory(), account.serialize_to_vec, fn(bytes: BitArray) {
       let assert Ok(account) = account.deserialize_all(bytes)
       account
     })
@@ -42,7 +43,7 @@ pub fn get_put_remove_test() {
   let assert Ok(key_4) = key_nibbles.from_str("cfb986f5a")
 
   let trie =
-    trie.new(fn(num: Int) { <<num:32>> }, fn(bytes: BitArray) {
+    trie.new(backend.memory(), fn(num: Int) { <<num:32>> }, fn(bytes: BitArray) {
       case bytes {
         <<num:32>> -> num
         _ -> panic as "Deserialization failed"
@@ -107,7 +108,7 @@ pub fn hybrid_nodes_test() {
   let assert Ok(key_5) = key_nibbles.from_str("412324")
 
   let trie =
-    trie.new(fn(num: Int) { <<num:32>> }, fn(bytes: BitArray) {
+    trie.new(backend.memory(), fn(num: Int) { <<num:32>> }, fn(bytes: BitArray) {
       case bytes {
         <<num:32>> -> num
         _ -> panic as "Deserialization failed"
@@ -190,7 +191,7 @@ pub fn can_handle_hybrid_node_with_one_child_test() {
   let assert Ok(key_4) = key_nibbles.from_str("413b391")
 
   let original =
-    trie.new(fn(num: Int) { <<num:32>> }, fn(bytes: BitArray) {
+    trie.new(backend.memory(), fn(num: Int) { <<num:32>> }, fn(bytes: BitArray) {
       case bytes {
         <<num:32>> -> num
         _ -> panic as "Deserialization failed"
@@ -230,7 +231,7 @@ pub fn can_iterate_over_nodes_test() {
     key_nibbles.from_str("0000000300000000000000000000000000000000")
 
   let trie =
-    trie.new(fn(num: Int) { <<num:32>> }, fn(bytes: BitArray) {
+    trie.new(backend.memory(), fn(num: Int) { <<num:32>> }, fn(bytes: BitArray) {
       case bytes {
         <<num:32>> -> num
         _ -> panic as "Deserialization failed"
