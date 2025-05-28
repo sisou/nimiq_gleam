@@ -33,7 +33,7 @@ pub fn deserialize_bitarray(
   }
 }
 
-pub fn serialize_int(buf: BytesTree, num: Int, bit_size: Int) -> BytesTree {
+fn serialize_int(buf: BytesTree, num: Int, bit_size: Int) -> BytesTree {
   buf
   |> bytes_tree.append(<<num:size(bit_size)>>)
 }
@@ -54,7 +54,7 @@ pub fn serialize_u64(buf: BytesTree, num: Int) -> BytesTree {
   buf |> serialize_int(num, 64)
 }
 
-pub fn deserialize_int(
+fn deserialize_int(
   buf: BitArray,
   bit_size: Int,
 ) -> Result(#(Int, BitArray), String) {
