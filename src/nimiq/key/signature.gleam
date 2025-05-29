@@ -1,10 +1,10 @@
 import gleam/bit_array
 import gleam/bytes_tree.{type BytesTree}
-import key/ed25519/private_key as ed25519_private_key
-import key/ed25519/public_key as ed25519_public_key
-import key/ed25519/signature as ed25519_signature
-import transaction/signature_proof_algorithm.{type SignatureProofAlgorithm}
-import utils/misc
+import nimiq/key/ed25519/private_key as ed25519_private_key
+import nimiq/key/ed25519/public_key as ed25519_public_key
+import nimiq/key/ed25519/signature as ed25519_signature
+import nimiq/transaction/signature_proof_algorithm.{type SignatureProofAlgorithm}
+import nimiq/utils/misc
 
 pub type Signature {
   EdDsaSignature(sig: ed25519_signature.Signature)

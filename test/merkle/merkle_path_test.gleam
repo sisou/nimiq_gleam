@@ -1,6 +1,6 @@
 import gleam/bit_array
 import gleeunit/should
-import merkle/merkle_path.{MerklePath, MerklePathNode}
+import nimiq/merkle/merkle_path.{MerklePath, MerklePathNode}
 
 pub fn serialize_and_deserialize_merkle_path_test() {
   let assert Ok(hash1) =

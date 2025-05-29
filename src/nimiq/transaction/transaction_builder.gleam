@@ -1,14 +1,14 @@
-import account/account_type
-import account/address.{type Address}
-import coin.{type Coin, Coin}
 import gleam/option.{type Option, None, Some}
-import key/ed25519/public_key as ed25519_public_key
-import policy
-import transaction/network_id.{type NetworkId}
-import transaction/signature_proof.{type SignatureProof}
-import transaction/staking_data
-import transaction/transaction.{type Transaction, Transaction}
-import transaction/transaction_flags
+import nimiq/account/account_type
+import nimiq/account/address.{type Address}
+import nimiq/coin.{type Coin, Coin}
+import nimiq/key/ed25519/public_key as ed25519_public_key
+import nimiq/policy
+import nimiq/transaction/network_id.{type NetworkId}
+import nimiq/transaction/signature_proof.{type SignatureProof}
+import nimiq/transaction/staking_data
+import nimiq/transaction/transaction.{type Transaction, Transaction}
+import nimiq/transaction/transaction_flags
 
 pub fn new_basic(
   sender: Address,

@@ -1,9 +1,9 @@
-import account/address
 import dummy
 import gleam/result
 import gleeunit/should
-import key/ed25519/public_key as ed25519_public_key
-import key/public_key.{EdDsaPublicKey}
+import nimiq/account/address
+import nimiq/key/ed25519/public_key as ed25519_public_key
+import nimiq/key/public_key.{EdDsaPublicKey}
 
 pub fn from_hex_to_userfriendly_test() {
   let assert Ok("NQ07 0000 0000 0000 0000 0000 0000 0000 0000") =

@@ -1,20 +1,20 @@
-import account/account_type
-import account/address
-import coin.{Coin}
 import gleam/bit_array
 import gleam/option.{None}
 import gleam/result
 import gleeunit/should
-import key/ed25519/public_key as ed25519_public_key
-import key/ed25519/signature as ed25519_signature
-import key/public_key.{EdDsaPublicKey}
-import key/signature.{EdDsaSignature}
-import merkle/merkle_path
-import transaction/network_id
-import transaction/signature_proof.{SignatureProof}
-import transaction/transaction
-import transaction/transaction_builder
-import utils/misc
+import nimiq/account/account_type
+import nimiq/account/address
+import nimiq/coin.{Coin}
+import nimiq/key/ed25519/public_key as ed25519_public_key
+import nimiq/key/ed25519/signature as ed25519_signature
+import nimiq/key/public_key.{EdDsaPublicKey}
+import nimiq/key/signature.{EdDsaSignature}
+import nimiq/merkle/merkle_path
+import nimiq/transaction/network_id
+import nimiq/transaction/signature_proof.{SignatureProof}
+import nimiq/transaction/transaction
+import nimiq/transaction/transaction_builder
+import nimiq/utils/misc
 
 pub fn serialize_basic_test() {
   // Transaction data is from my explanation of Nimiq's transaction serialization at

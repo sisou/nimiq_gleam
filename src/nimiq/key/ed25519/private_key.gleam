@@ -1,8 +1,8 @@
-import bindings/ed25519
 import gleam/bit_array
 import gleam/bytes_tree.{type BytesTree}
 import gleam/result
-import utils/misc
+import nimiq/bindings/ed25519
+import nimiq/utils/misc
 
 const size = 32
 

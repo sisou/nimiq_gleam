@@ -1,20 +1,20 @@
-import account/account_type.{type AccountType}
-import account/address.{type Address}
-import coin.{type Coin, Coin}
 import gleam/bit_array
 import gleam/bytes_tree.{type BytesTree}
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
-import key/public_key
-import key/signature
-import transaction/network_id.{type NetworkId}
-import transaction/signature_proof.{type SignatureProof}
-import transaction/signature_proof_flags
-import transaction/transaction_flags.{type TransactionFlags}
-import transaction/transaction_format.{type TransactionFormat}
-import utils/misc
-import utils/serde
+import nimiq/account/account_type.{type AccountType}
+import nimiq/account/address.{type Address}
+import nimiq/coin.{type Coin, Coin}
+import nimiq/key/public_key
+import nimiq/key/signature
+import nimiq/transaction/network_id.{type NetworkId}
+import nimiq/transaction/signature_proof.{type SignatureProof}
+import nimiq/transaction/signature_proof_flags
+import nimiq/transaction/transaction_flags.{type TransactionFlags}
+import nimiq/transaction/transaction_format.{type TransactionFormat}
+import nimiq/utils/misc
+import nimiq/utils/serde
 
 pub type Transaction {
   Transaction(

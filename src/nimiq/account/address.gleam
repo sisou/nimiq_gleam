@@ -5,8 +5,8 @@ import gleam/int
 import gleam/list
 import gleam/result
 import gleam/string
-import utils/base32
-import utils/misc
+import nimiq/utils/base32
+import nimiq/utils/misc
 
 const size = 20
 

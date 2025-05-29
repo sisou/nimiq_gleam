@@ -1,10 +1,10 @@
-import account/address.{type Address}
-import bindings/blake2
 import gleam/bit_array
 import gleam/bytes_tree.{type BytesTree}
-import key/ed25519/public_key as ed25519_public_key
-import transaction/signature_proof_algorithm.{type SignatureProofAlgorithm}
-import utils/misc
+import nimiq/account/address.{type Address}
+import nimiq/bindings/blake2
+import nimiq/key/ed25519/public_key as ed25519_public_key
+import nimiq/transaction/signature_proof_algorithm.{type SignatureProofAlgorithm}
+import nimiq/utils/misc
 
 pub type PublicKey {
   EdDsaPublicKey(key: ed25519_public_key.PublicKey)

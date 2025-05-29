@@ -1,8 +1,8 @@
-import bindings/blake2
 import dummy
 import gleam/bit_array
 import gleeunit/should
-import utils/misc
+import nimiq/bindings/blake2
+import nimiq/utils/misc
 
 pub fn blake2b_hash_test() {
   dummy.message

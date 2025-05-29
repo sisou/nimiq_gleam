@@ -2,12 +2,12 @@ import gleam/bytes_tree.{type BytesTree}
 import gleam/int
 import gleam/option.{type Option, None, Some}
 import gleam/result
-import key/public_key.{type PublicKey, EcDsaPublicKey, EdDsaPublicKey}
-import key/signature.{type Signature}
-import merkle/merkle_path.{type MerklePath}
-import transaction/signature_proof_algorithm.{type SignatureProofAlgorithm}
-import transaction/signature_proof_flags.{type SignatureProofFlags}
-import utils/serde
+import nimiq/key/public_key.{type PublicKey, EcDsaPublicKey, EdDsaPublicKey}
+import nimiq/key/signature.{type Signature}
+import nimiq/merkle/merkle_path.{type MerklePath}
+import nimiq/transaction/signature_proof_algorithm.{type SignatureProofAlgorithm}
+import nimiq/transaction/signature_proof_flags.{type SignatureProofFlags}
+import nimiq/utils/serde
 
 pub type SignatureProof {
   SignatureProof(

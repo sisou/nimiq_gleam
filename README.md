@@ -14,7 +14,7 @@ gleam add nimiq_gleam
 ## Address module
 
 ```gleam
-import nimiq_gleam/account/address
+import nimiq/account/address
 
 pub fn main() {
   let formatted_addr =
@@ -27,10 +27,10 @@ pub fn main() {
 ## Key modules
 
 ```gleam
-import nimiq_gleam/account/address
-import nimiq_gleam/key/ed25519/private_key as private_key
-import nimiq_gleam/key/ed25519/public_key as ed25519_public_key
-import nimiq_gleam/key/public_key
+import nimiq/account/address
+import nimiq/key/ed25519/private_key as private_key
+import nimiq/key/ed25519/public_key as ed25519_public_key
+import nimiq/key/public_key
 
 // Generate a new private key
 let private = private_key.generate()
@@ -48,17 +48,17 @@ io.println(address.to_user_friendly_address(address))
 
 ```gleam
 import gleam/option.{None}
-import nimiq_gleam/account/address
-import nimiq_gleam/coin.{Coin}
-import nimiq_gleam/key/ed25519/private_key as private_key
-import nimiq_gleam/key/ed25519/public_key as ed25519_public_key
-import nimiq_gleam/key/ed25519/signature as ed25519_signature
-import nimiq_gleam/key/public_key.{EdDsaPublicKey}
-import nimiq_gleam/key/signature.{EdDsaSignature}
-import nimiq_gleam/transaction/network_id
-import nimiq_gleam/transaction/signature_proof
-import nimiq_gleam/transaction/transaction
-import nimiq_gleam/transaction/transaction_builder
+import nimiq/account/address
+import nimiq/coin.{Coin}
+import nimiq/key/ed25519/private_key as private_key
+import nimiq/key/ed25519/public_key as ed25519_public_key
+import nimiq/key/ed25519/signature as ed25519_signature
+import nimiq/key/public_key.{EdDsaPublicKey}
+import nimiq/key/signature.{EdDsaSignature}
+import nimiq/transaction/network_id
+import nimiq/transaction/signature_proof
+import nimiq/transaction/transaction
+import nimiq/transaction/transaction_builder
 
 let assert Ok(sender) =
   "NQ17 D2ES UBTP N14D RG4E 2KBK 217A 2GH2 NNY1"

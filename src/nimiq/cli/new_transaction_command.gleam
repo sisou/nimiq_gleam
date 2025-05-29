@@ -1,5 +1,3 @@
-import account/address
-import coin.{Coin}
 import gleam/bit_array
 import gleam/int
 import gleam/io
@@ -8,17 +6,19 @@ import gleam/result
 import gleam/string
 import glint
 import glint/constraint
-import key/ed25519/private_key as ed25519_private_key
-import key/ed25519/public_key as ed25519_public_key
-import key/ed25519/signature as ed25519_signature
-import key/public_key.{EdDsaPublicKey}
-import key/signature.{EdDsaSignature}
+import nimiq/account/address
+import nimiq/coin.{Coin}
+import nimiq/key/ed25519/private_key as ed25519_private_key
+import nimiq/key/ed25519/public_key as ed25519_public_key
+import nimiq/key/ed25519/signature as ed25519_signature
+import nimiq/key/public_key.{EdDsaPublicKey}
+import nimiq/key/signature.{EdDsaSignature}
+import nimiq/transaction/network_id
+import nimiq/transaction/signature_proof
+import nimiq/transaction/transaction
+import nimiq/transaction/transaction_builder
+import nimiq/utils/misc
 import snag
-import transaction/network_id
-import transaction/signature_proof
-import transaction/transaction
-import transaction/transaction_builder
-import utils/misc
 
 fn fee_flag() -> glint.Flag(Int) {
   glint.int_flag("fee")

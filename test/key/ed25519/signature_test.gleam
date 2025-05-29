@@ -1,9 +1,9 @@
 import dummy
 import gleam/bit_array
 import gleeunit/should
-import key/ed25519/private_key
-import key/ed25519/public_key
-import key/ed25519/signature
+import nimiq/key/ed25519/private_key
+import nimiq/key/ed25519/public_key
+import nimiq/key/ed25519/signature
 
 pub fn create_signature_test() {
   let assert Ok(private) = private_key.from_hex(dummy.private_key_hex)

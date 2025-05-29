@@ -1,21 +1,21 @@
-import account/address.{type Address}
-import bls/compressed_signature
-import bls/secret_key
-import coin.{Coin}
 import dummy
 import gleam/bit_array
 import gleam/option.{Some}
 import gleeunit/should
-import key/ed25519/private_key as ed25519_private_key
-import key/ed25519/public_key as ed25519_public_key
-import key/ed25519/signature as ed25519_signature
-import key/public_key.{EdDsaPublicKey}
-import key/signature.{EdDsaSignature}
-import policy
-import transaction/network_id
-import transaction/signature_proof
-import transaction/transaction.{type Transaction}
-import transaction/transaction_builder
+import nimiq/account/address.{type Address}
+import nimiq/bls/compressed_signature
+import nimiq/bls/secret_key
+import nimiq/coin.{Coin}
+import nimiq/key/ed25519/private_key as ed25519_private_key
+import nimiq/key/ed25519/public_key as ed25519_public_key
+import nimiq/key/ed25519/signature as ed25519_signature
+import nimiq/key/public_key.{EdDsaPublicKey}
+import nimiq/key/signature.{EdDsaSignature}
+import nimiq/policy
+import nimiq/transaction/network_id
+import nimiq/transaction/signature_proof
+import nimiq/transaction/transaction.{type Transaction}
+import nimiq/transaction/transaction_builder
 
 const validator_address = "83fa05dbe31f85e719f4c4fd67ebdba2e444d9f8"
 

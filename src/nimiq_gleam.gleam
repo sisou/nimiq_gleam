@@ -1,7 +1,7 @@
 import argv
-import cli/address_command
-import cli/new_transaction_command
 import glint
+import nimiq/cli/address_command
+import nimiq/cli/new_transaction_command
 
 pub fn main() {
   // Create a new glint instance

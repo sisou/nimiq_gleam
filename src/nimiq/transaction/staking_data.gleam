@@ -1,14 +1,14 @@
-import account/address.{type Address}
-import coin.{type Coin}
 import gleam/bytes_tree.{type BytesTree}
 import gleam/int
 import gleam/option.{type Option, None, Some}
 import gleam/pair
 import gleam/result
-import key/ed25519/public_key.{type PublicKey as Ed25519PublicKey}
-import transaction/signature_proof.{type SignatureProof}
-import utils/misc
-import utils/serde
+import nimiq/account/address.{type Address}
+import nimiq/coin.{type Coin}
+import nimiq/key/ed25519/public_key.{type PublicKey as Ed25519PublicKey}
+import nimiq/transaction/signature_proof.{type SignatureProof}
+import nimiq/utils/misc
+import nimiq/utils/serde
 
 pub type Blake2bHash =
   BitArray

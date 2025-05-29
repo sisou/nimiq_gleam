@@ -1,4 +1,4 @@
-import coin.{Coin}
+import nimiq/coin.{Coin}
 
 /// 100 NIM
 pub const minimum_stake = Coin(10_000_000)

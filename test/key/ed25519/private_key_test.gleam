@@ -1,7 +1,7 @@
 import dummy
 import gleam/string
 import gleeunit/should
-import key/ed25519/private_key
+import nimiq/key/ed25519/private_key
 
 pub fn generate_private_key_test() {
   let private = private_key.generate()

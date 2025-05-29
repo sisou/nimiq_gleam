@@ -1,5 +1,5 @@
-import bindings/bls as native
 import gleam/bytes_tree.{type BytesTree}
+import nimiq/bindings/bls as native
 
 pub type CompressedSignature {
   CompressedSignature(sig: native.Signature)

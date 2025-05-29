@@ -1,8 +1,8 @@
-import bindings/ed25519
 import dummy
 import gleam/bit_array
 import gleeunit/should
-import utils/misc
+import nimiq/bindings/ed25519
+import nimiq/utils/misc
 
 pub fn derive_public_key_test() {
   let assert Ok(private) = bit_array.base16_decode(dummy.private_key_hex)

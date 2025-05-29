@@ -1,9 +1,9 @@
-import bindings/bls
 import dummy
 import gleam/bit_array
 import gleam/string
 import gleeunit/should
-import utils/misc
+import nimiq/bindings/bls
+import nimiq/utils/misc
 
 pub fn generate_bls_secret_key_test() {
   bls.generate_secret_key()

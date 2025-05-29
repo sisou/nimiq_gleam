@@ -1,6 +1,8 @@
-import bindings/bls as native
-import bls/compressed_signature.{type CompressedSignature, CompressedSignature}
 import gleam/bytes_tree.{type BytesTree}
+import nimiq/bindings/bls as native
+import nimiq/bls/compressed_signature.{
+  type CompressedSignature, CompressedSignature,
+}
 
 const size = 95
 

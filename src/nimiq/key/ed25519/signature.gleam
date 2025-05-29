@@ -1,10 +1,10 @@
-import bindings/ed25519
 import gleam/bit_array
 import gleam/bytes_tree.{type BytesTree}
 import gleam/result
-import key/ed25519/private_key.{type PrivateKey}
-import key/ed25519/public_key.{type PublicKey}
-import utils/misc
+import nimiq/bindings/ed25519
+import nimiq/key/ed25519/private_key.{type PrivateKey}
+import nimiq/key/ed25519/public_key.{type PublicKey}
+import nimiq/utils/misc
 
 pub const size = 64
 

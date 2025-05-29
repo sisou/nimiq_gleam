@@ -1,11 +1,11 @@
-import bls/compressed_public_key
-import bls/compressed_signature
-import bls/secret_key
 import dummy
 import gleam/bit_array
 import gleam/string
 import gleeunit/should
-import utils/misc
+import nimiq/bls/compressed_public_key
+import nimiq/bls/compressed_signature
+import nimiq/bls/secret_key
+import nimiq/utils/misc
 
 pub fn generate_bls_secret_key_test() {
   secret_key.generate()

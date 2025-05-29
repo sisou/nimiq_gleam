@@ -1,8 +1,8 @@
-import bindings/varint
-import coin.{type Coin, Coin}
 import gleam/bit_array
 import gleam/bytes_tree.{type BytesTree}
 import gleam/string
+import nimiq/bindings/varint
+import nimiq/coin.{type Coin, Coin}
 
 pub fn serialize_bytes(buf: BytesTree, data: BitArray) -> BytesTree {
   buf

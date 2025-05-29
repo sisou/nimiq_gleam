@@ -1,9 +1,9 @@
-import bindings/ed25519
 import gleam/bit_array
 import gleam/bytes_tree.{type BytesTree}
 import gleam/result
-import key/ed25519/private_key.{type PrivateKey}
-import utils/misc
+import nimiq/bindings/ed25519
+import nimiq/key/ed25519/private_key.{type PrivateKey}
+import nimiq/utils/misc
 
 const size = 32
 

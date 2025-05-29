@@ -4,7 +4,7 @@ import gleam/float
 import gleam/int
 import gleam/list
 import gleam/result
-import utils/serde
+import nimiq/utils/serde
 
 pub type MerklePath {
   MerklePath(nodes: List(MerklePathNode))

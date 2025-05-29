@@ -1,13 +1,13 @@
-import account/address
 import gleam/bit_array
 import gleam/option.{None, Some}
 import gleam/result
 import gleeunit/should
-import key/ed25519/private_key as ed25519_private_key
-import key/ed25519/public_key as ed25519_public_key
-import transaction/signature_proof
-import transaction/staking_data
-import utils/misc
+import nimiq/account/address
+import nimiq/key/ed25519/private_key as ed25519_private_key
+import nimiq/key/ed25519/public_key as ed25519_public_key
+import nimiq/transaction/signature_proof
+import nimiq/transaction/staking_data
+import nimiq/utils/misc
 
 pub fn create_validator_serialization_test() {
   let assert Ok(private_key) =
