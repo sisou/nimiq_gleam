@@ -1,7 +1,7 @@
+import ged25519
 import gleam/bit_array
 import gleam/bytes_tree.{type BytesTree}
 import gleam/result
-import nimiq/bindings/ed25519
 import nimiq/key/ed25519/private_key.{type PrivateKey}
 import nimiq/utils/misc
 
@@ -14,7 +14,7 @@ pub opaque type PublicKey {
 pub fn derive_key(private: PrivateKey) -> PublicKey {
   private
   |> private_key.serialize_to_bits()
-  |> ed25519.derive_public_key()
+  |> ged25519.derive_public_key()
   |> PublicKey()
 }
 

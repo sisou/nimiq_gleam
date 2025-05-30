@@ -1,7 +1,7 @@
+import ged25519
 import gleam/bit_array
 import gleam/bytes_tree.{type BytesTree}
 import gleam/result
-import nimiq/bindings/ed25519
 import nimiq/utils/misc
 
 const size = 32
@@ -11,7 +11,7 @@ pub opaque type PrivateKey {
 }
 
 pub fn generate() -> PrivateKey {
-  let #(secret, _) = ed25519.generate_key_pair()
+  let #(secret, _) = ged25519.generate_key_pair()
   PrivateKey(secret)
 }
 

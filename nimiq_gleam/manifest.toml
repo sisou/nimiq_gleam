@@ -6,6 +6,7 @@ packages = [
   { name = "blake2", version = "1.0.4", build_tools = ["mix"], requirements = [], otp_app = "blake2", source = "hex", outer_checksum = "E9F4120D163BA14D86304195E50745FA18483E6AD2BE94C864AE449BBDD6A189" },
   { name = "ed25519", version = "1.4.3", build_tools = ["mix"], requirements = [], otp_app = "ed25519", source = "hex", outer_checksum = "37F9DE6BE4A0E67D56F1B69EC2B79D4D96FEA78365F45F5D5D344C48CF81D487" },
   { name = "gblake2", version = "1.0.0", build_tools = ["gleam"], requirements = ["blake2", "gleam_stdlib"], otp_app = "gblake2", source = "hex", outer_checksum = "0DC6C161A32291DC08CD60425C34B43F6651DFF91BF2EE67B80515BA2442CF2D" },
+  { name = "ged25519", version = "1.0.0", build_tools = ["gleam"], requirements = ["ed25519", "gleam_stdlib"], otp_app = "ged25519", source = "hex", outer_checksum = "06AFE6129CA05D3F7346D9ADECE1A7D0DFFE8C21EBE017E1D6155A5D20F9A3D3" },
   { name = "gleam_community_ansi", version = "1.4.3", build_tools = ["gleam"], requirements = ["gleam_community_colour", "gleam_regexp", "gleam_stdlib"], otp_app = "gleam_community_ansi", source = "hex", outer_checksum = "8A62AE9CC6EA65BEA630D95016D6C07E4F9973565FA3D0DE68DC4200D8E0DD27" },
   { name = "gleam_community_colour", version = "2.0.1", build_tools = ["gleam"], requirements = ["gleam_json", "gleam_stdlib"], otp_app = "gleam_community_colour", source = "hex", outer_checksum = "F0ACE69E3A47E913B03D3D0BB23A5563A91A4A7D20956916286068F4A9F817FE" },
   { name = "gleam_json", version = "3.0.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_json", source = "hex", outer_checksum = "5BA154440B22D9800955B1AB854282FA37B97F30F409D76B0824D0A60C934188" },
@@ -21,8 +22,8 @@ packages = [
 
 [requirements]
 argv = { version = ">= 1.0.2 and < 2.0.0" }
-ed25519 = { version = ">= 1.4.1 and < 2.0.0" }
 gblake2 = { version = ">= 1.0.0 and < 2.0.0" }
+ged25519 = { version = ">= 1.0.0 and < 2.0.0" }
 gleam_stdlib = { version = ">= 0.34.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
 glint = { version = ">= 1.0.1 and < 2.0.0" }

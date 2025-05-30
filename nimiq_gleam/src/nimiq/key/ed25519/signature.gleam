@@ -1,7 +1,7 @@
+import ged25519
 import gleam/bit_array
 import gleam/bytes_tree.{type BytesTree}
 import gleam/result
-import nimiq/bindings/ed25519
 import nimiq/key/ed25519/private_key.{type PrivateKey}
 import nimiq/key/ed25519/public_key.{type PublicKey}
 import nimiq/utils/misc
@@ -17,7 +17,7 @@ pub fn create(
   public: PublicKey,
   data: BitArray,
 ) -> Signature {
-  Signature(ed25519.signature(
+  Signature(ged25519.signature(
     data,
     private_key.serialize_to_bits(private),
     public_key.serialize_to_bits(public),
