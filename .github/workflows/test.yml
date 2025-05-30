@@ -2,17 +2,22 @@ name: test
 
 on:
   push:
-    branches:
-      - master
-      - main
   pull_request:
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: nimiq_gleam
+    strategy:
+      matrix:
+        package: [
+          gblake2,
+          ged25519,
+          gvarint,
+          nimiq_bls,
+          nimiq_cli,
+          nimiq_gleam,
+          nimiq_serde,
+        ]
 
     steps:
       - uses: actions/checkout@v4
@@ -23,5 +28,8 @@ jobs:
           rebar3-version: "3"
           elixir-version: "1"
       - run: gleam deps download
+        working-directory: ${{ matrix.package }}
       - run: gleam test
+        working-directory: ${{ matrix.package }}
       - run: gleam format --check src test
+        working-directory: ${{ matrix.package }}
