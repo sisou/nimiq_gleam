@@ -12,9 +12,9 @@ repository = { type = "github", user = "sisou", repo = "nimiq_gleam" }
 [dependencies]
 gleam_stdlib = ">= 0.34.0 and < 2.0.0"
 nimiq_serde = { path = "../nimiq_serde" }
-gblake2 = ">= 1.0.0 and < 2.0.0"
 ged25519 = ">= 1.0.0 and < 2.0.0"
 nimiq_bls = { path = "../nimiq_bls" }
+nimiq_blake2b = { path = "../nimiq_blake2b" }
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"

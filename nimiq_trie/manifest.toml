@@ -15,6 +15,7 @@ packages = [
   { name = "iv", version = "1.3.1", build_tools = ["gleam"], requirements = ["gleam_stdlib", "gleam_yielder"], otp_app = "iv", source = "hex", outer_checksum = "CF22420D768D169E2A54DE3F24491C7D1BE6E1ECAED38A7E8BD1FD1C8B2B256F" },
   { name = "lifeguard", version = "1.1.0", build_tools = ["gleam"], requirements = ["gleam_deque", "gleam_erlang", "gleam_otp", "gleam_stdlib"], otp_app = "lifeguard", source = "hex", outer_checksum = "043A44839FC9CCD209DE305F0EC96C09AB8F6A830D7346A49829321B148EE730" },
   { name = "mug", version = "1.2.0", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_stdlib"], otp_app = "mug", source = "hex", outer_checksum = "C5F62A3FD753B823CE296ED1B223D4B2FF06E91170A7DE35A283D70BB74B700E" },
+  { name = "nimiq_blake2b", version = "1.0.0", build_tools = ["gleam"], requirements = ["gblake2", "gleam_stdlib"], source = "local", path = "../nimiq_blake2b" },
   { name = "nimiq_serde", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib", "gvarint"], source = "local", path = "../nimiq_serde" },
   { name = "radish", version = "0.16.0", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_otp", "gleam_stdlib", "lifeguard", "mug"], source = "git", repo = "https://github.com/sisou/radish.git", commit = "e6038d6aafe5292149321403210f44d57a8a600c" },
   { name = "varint", version = "1.5.1", build_tools = ["mix"], requirements = [], otp_app = "varint", source = "hex", outer_checksum = "24F3DEB61E91CB988056DE79D06F01161DD01BE5E0ACAE61D8D936A552F1BE73" },
@@ -22,10 +23,10 @@ packages = [
 
 [requirements]
 base_x_gleam = { version = ">= 0.1.2 and < 1.0.0" }
-gblake2 = { version = ">= 1.0.0 and < 2.0.0" }
 gleam_stdlib = { version = ">= 0.44.0 and < 2.0.0" }
 gleam_yielder = { version = ">= 1.1.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
 iv = { version = ">= 1.3.1 and < 2.0.0" }
+nimiq_blake2b = { path = "../nimiq_blake2b" }
 nimiq_serde = { path = "../nimiq_serde" }
 radish = { git = "https://github.com/sisou/radish.git", ref = "remove-pop-map" }
