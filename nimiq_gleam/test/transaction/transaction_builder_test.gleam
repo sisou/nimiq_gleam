@@ -1,4 +1,3 @@
-import dummy
 import gleam/bit_array
 import gleam/option.{Some}
 import gleeunit/should
