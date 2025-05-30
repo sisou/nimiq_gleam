@@ -5,8 +5,8 @@ import gleam/string
 import gleeunit/should
 
 import nimiq/blake2b
-import nimiq/key_nibbles
 import nimiq/trie/error
+import nimiq/trie/key_nibbles
 import nimiq/trie/node.{TrieNode}
 
 pub fn child_index_test() {

@@ -2,8 +2,8 @@ import gleam/bytes_tree.{type BytesTree}
 import gleam/result
 
 import nimiq/blake2b
-import nimiq/key_nibbles.{type KeyNibbles}
 import nimiq/serde
+import nimiq/trie/key_nibbles.{type KeyNibbles}
 
 /// A struct representing the child of a node. It just contains the child's suffix (the part of the
 /// child's key that is different from its parent) and its hash.

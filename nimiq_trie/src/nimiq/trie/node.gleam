@@ -7,9 +7,9 @@ import gleam/result
 import iv
 
 import nimiq/blake2b
-import nimiq/key_nibbles.{type KeyNibbles}
 import nimiq/serde
 import nimiq/trie/error.{type TrieError}
+import nimiq/trie/key_nibbles.{type KeyNibbles}
 import nimiq/trie/node_child.{type TrieNodeChild, TrieNodeChild}
 import nimiq/trie/root_data.{type RootData, RootData}
 

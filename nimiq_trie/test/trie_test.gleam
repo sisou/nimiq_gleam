@@ -5,9 +5,9 @@ import gleam/yielder
 import gleeunit/should
 
 import account
-import nimiq/key_nibbles
 import nimiq/trie
 import nimiq/trie/backend
+import nimiq/trie/key_nibbles
 
 /// Adds one account to the trie and checks the root hash.
 pub fn simple_trie_test() {

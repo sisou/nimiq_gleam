@@ -2,7 +2,7 @@ import gleam/option.{type Option}
 
 import iv
 
-import nimiq/key_nibbles.{type KeyNibbles}
+import nimiq/trie/key_nibbles.{type KeyNibbles}
 import nimiq/trie/node_child.{type TrieNodeChild}
 
 pub type ProofValue {

@@ -6,9 +6,9 @@ import gleeunit/should
 import radish
 
 import account
-import nimiq/key_nibbles
 import nimiq/trie
 import nimiq/trie/backend
+import nimiq/trie/key_nibbles
 
 /// Adds one account to the trie and checks the root hash.
 pub fn simple_redis_test() {

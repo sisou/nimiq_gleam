@@ -8,10 +8,10 @@ import gleam/yielder.{type Yielder}
 
 import iv
 
-import nimiq/key_nibbles.{type KeyNibbles}
 import nimiq/trie/backend.{type Backend}
 import nimiq/trie/count_updates.{type CountUpdates, CountUpdates}
 import nimiq/trie/item.{type TrieItem}
+import nimiq/trie/key_nibbles.{type KeyNibbles}
 import nimiq/trie/node.{type TrieNode, TrieNode}
 import nimiq/trie/node_child.{TrieNodeChild}
 
