@@ -1,7 +1,7 @@
+import gblake2
 import gleam/bit_array
 import gleam/bytes_tree.{type BytesTree}
 import nimiq/account/address.{type Address}
-import nimiq/bindings/blake2
 import nimiq/key/ed25519/public_key as ed25519_public_key
 import nimiq/transaction/signature_proof_algorithm.{type SignatureProofAlgorithm}
 import nimiq/utils/misc
@@ -45,7 +45,7 @@ pub fn to_address(key: PublicKey) -> Address {
   let assert Ok(address) =
     key
     |> serialize_to_bits()
-    |> blake2.hash2b(32)
+    |> gblake2.hash2b(32)
     |> address.from_hash()
 
   address
