@@ -1,6 +1,6 @@
 import gleam/bytes_tree.{type BytesTree}
-import nimiq/bindings/bls as native
 import nimiq/bls/secret_key.{type SecretKey}
+import nimiq_bls/internal/bindings/bls as native
 
 const size = 285
 

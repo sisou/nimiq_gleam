@@ -16,6 +16,7 @@ glint = ">= 1.0.1 and < 2.0.0"
 nimiq_serde = { path = "../nimiq_serde" }
 gblake2 = ">= 1.0.0 and < 2.0.0"
 ged25519 = ">= 1.0.0 and < 2.0.0"
+nimiq_bls = { path = "../nimiq_bls" }
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
