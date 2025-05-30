@@ -1,7 +1,7 @@
 import gleam/option.{None, Some}
 import gleeunit/should
 
-import key_nibbles
+import nimiq/key_nibbles
 
 pub fn to_from_str_test() {
   let assert Ok(key) =

@@ -1,4 +1,4 @@
-import bindings/blake2
+import nimiq/bindings/blake2
 
 pub const default = <<0:unit(8)-size(32)>>
 

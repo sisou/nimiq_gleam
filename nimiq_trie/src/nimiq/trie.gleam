@@ -1,29 +1,27 @@
-import gleam/bit_array
 import gleam/bool
 import gleam/io
 import gleam/list
 import gleam/option.{type Option, None, Some}
-import gleam/order
 import gleam/result
 import gleam/string
 import gleam/yielder.{type Yielder}
 
 import iv
 
-import backend.{type Backend}
-import key_nibbles.{type KeyNibbles}
-import trie/count_updates.{type CountUpdates, CountUpdates}
-import trie/trie_item.{type TrieItem}
-import trie/trie_node.{type TrieNode, TrieNode}
-import trie/trie_node_child.{TrieNodeChild}
+import nimiq/key_nibbles.{type KeyNibbles}
+import nimiq/trie/backend.{type Backend}
+import nimiq/trie/count_updates.{type CountUpdates, CountUpdates}
+import nimiq/trie/item.{type TrieItem}
+import nimiq/trie/node.{type TrieNode, TrieNode}
+import nimiq/trie/node_child.{TrieNodeChild}
 
-// import trie/trie_chunk.{type TrieChunk, type TrieChunkPushResult}
-// import trie/trie_proof.{type TrieProof}
-// import trie/trie_proof_node.{type TrieProofNode}
+// import trie/chunk.{type TrieChunk, type TrieChunkPushResult}
+// import trie/proof.{type TrieProof}
+// import trie/proof_node.{type TrieProofNode}
 
-pub type MerkleRadixTrie(store, data) {
+pub type MerkleRadixTrie(store, meta, data) {
   MerkleRadixTrie(
-    table: Backend(store),
+    table: Backend(store, meta),
     serializer: fn(data) -> BitArray,
     deserializer: fn(BitArray) -> data,
   )
@@ -31,29 +29,31 @@ pub type MerkleRadixTrie(store, data) {
 
 /// Start a new Merkle Radix Trie
 pub fn new(
-  table: Backend(store),
+  table: Backend(store, meta),
   serializer serializer: fn(data) -> BitArray,
   deserializer deserializer: fn(BitArray) -> data,
-) -> MerkleRadixTrie(store, data) {
+) -> MerkleRadixTrie(store, meta, data) {
   MerkleRadixTrie(table:, deserializer:, serializer:)
   |> init_root()
 }
 
-fn init_root(trie: MerkleRadixTrie(store, data)) -> MerkleRadixTrie(store, data) {
+fn init_root(
+  trie: MerkleRadixTrie(store, meta, data),
+) -> MerkleRadixTrie(store, meta, data) {
   case trie |> get_root() {
     // Root already exists
     Some(_) -> trie
     None -> {
-      let root = trie_node.new_root()
+      let root = node.new_root()
       trie |> put_node(root)
     }
   }
 }
 
 pub fn init(
-  trie: MerkleRadixTrie(store, data),
+  trie: MerkleRadixTrie(store, meta, data),
   values: List(TrieItem),
-) -> MerkleRadixTrie(store, data) {
+) -> MerkleRadixTrie(store, meta, data) {
   // let assert True = trie |> is_complete()
   let assert 0 = trie |> num_leaves()
   let assert 0 = trie |> num_hybrids()
@@ -69,7 +69,7 @@ pub fn init(
 
 /// Prints a human friendly version of the subtrie for debugging.
 /// Not to be used on large trees!
-pub fn debug_print(trie: MerkleRadixTrie(store, data)) {
+pub fn debug_print(trie: MerkleRadixTrie(store, meta, data)) {
   io.println("-> ROOT")
   trie |> debug_print_subtrie(key_nibbles.root(), 2)
 }
@@ -77,7 +77,7 @@ pub fn debug_print(trie: MerkleRadixTrie(store, data)) {
 /// Prints a human friendly version of the subtrie for debugging.
 /// Not to be used on large trees!
 pub fn debug_print_subtrie(
-  trie: MerkleRadixTrie(store, data),
+  trie: MerkleRadixTrie(store, meta, data),
   key: KeyNibbles,
   depth: Int,
 ) {
@@ -88,23 +88,23 @@ pub fn debug_print_subtrie(
       //   prefix
       //   <> "   ["
       //   <> node
-      //   |> trie_node.hash_assert()
+      //   |> node.hash_assert()
       //   |> bit_array.base16_encode()
       //   |> string.lowercase()
       //   <> "]",
       // )
       node
-      |> trie_node.iter_children()
+      |> node.iter_children()
       |> iv.each(fn(child) {
         io.println(
           prefix
           <> "-> "
           <> child.suffix |> key_nibbles.to_string()
           <> " ("
-          <> child |> trie_node_child.has_hash() |> bool.to_string()
+          <> child |> node_child.has_hash() |> bool.to_string()
           <> ")",
         )
-        let subkey = child |> trie_node_child.key(key)
+        let subkey = child |> node_child.key(key)
         debug_print_subtrie(trie, subkey, depth + 2)
       })
     }
@@ -115,42 +115,42 @@ pub fn debug_print_subtrie(
 }
 
 /// Returns the root hash of the Merkle Radix Trie.
-pub fn root_hash_assert(trie: MerkleRadixTrie(store, data)) -> BitArray {
+pub fn root_hash_assert(trie: MerkleRadixTrie(store, meta, data)) -> BitArray {
   let assert Some(root) = trie |> get_root()
-  root |> trie_node.hash_assert()
+  root |> node.hash_assert()
 }
 
 /// Returns the root hash of the Merkle Radix Trie if the trie is complete.
-pub fn root_hash(trie: MerkleRadixTrie(store, data)) -> Option(BitArray) {
+pub fn root_hash(trie: MerkleRadixTrie(store, meta, data)) -> Option(BitArray) {
   let assert Some(root) = trie |> get_root()
-  root |> trie_node.hash()
+  root |> node.hash()
 }
 
-// pub fn is_complete(trie: MerkleRadixTrie(store, data)) -> Bool {
+// pub fn is_complete(trie: MerkleRadixTrie(store, meta, data)) -> Bool {
 //   let assert Some(root) = trie |> get_root()
 //   let assert Some(root_data) = root.root_data
 //   root_data.incomplete_from |> option.is_none()
 // }
 
-pub fn num_branches(trie: MerkleRadixTrie(store, data)) -> Int {
+pub fn num_branches(trie: MerkleRadixTrie(store, meta, data)) -> Int {
   let assert Some(root) = trie |> get_root()
   let assert Some(root_data) = root.root_data
   root_data.num_branches
 }
 
-pub fn num_hybrids(trie: MerkleRadixTrie(store, data)) -> Int {
+pub fn num_hybrids(trie: MerkleRadixTrie(store, meta, data)) -> Int {
   let assert Some(root) = trie |> get_root()
   let assert Some(root_data) = root.root_data
   root_data.num_hybrids
 }
 
-pub fn num_leaves(trie: MerkleRadixTrie(store, data)) -> Int {
+pub fn num_leaves(trie: MerkleRadixTrie(store, meta, data)) -> Int {
   let assert Some(root) = trie |> get_root()
   let assert Some(root_data) = root.root_data
   root_data.num_leaves
 }
 
-pub fn count_nodes(trie: MerkleRadixTrie(store, data)) -> #(Int, Int, Int) {
+pub fn count_nodes(trie: MerkleRadixTrie(store, meta, data)) -> #(Int, Int, Int) {
   let count_branches = 0
   let count_hybrids = 0
   let count_leaves = 0
@@ -171,7 +171,7 @@ pub fn count_nodes(trie: MerkleRadixTrie(store, data)) -> #(Int, Int, Int) {
 }
 
 fn count_nodes_while(
-  trie: MerkleRadixTrie(store, data),
+  trie: MerkleRadixTrie(store, meta, data),
   stack: List(TrieNode),
   num_branches: Int,
   num_hybrids: Int,
@@ -182,27 +182,27 @@ fn count_nodes_while(
     [item, ..stack] -> {
       let stack =
         item
-        |> trie_node.iter_children()
+        |> node.iter_children()
         |> iv.fold(stack, fn(stack, child) {
-          let child_key = child |> trie_node_child.key(item.key)
+          let child_key = child |> node_child.key(item.key)
           let assert Some(child) = trie |> get_node(child_key)
             as "Failed to find the child of a Merkle Radix Trie node. The database must be corrupt!"
           [child, ..stack]
         })
-      case item |> trie_node.kind() {
+      case item |> node.kind() {
         None -> panic as "Empty nodes mustn't exist in the database"
-        Some(trie_node.Root) -> {
+        Some(node.Root) -> {
           count_nodes_while(trie, stack, num_branches, num_hybrids, num_leaves)
         }
-        Some(trie_node.Branch) -> {
+        Some(node.Branch) -> {
           let num_branches = num_branches + 1
           count_nodes_while(trie, stack, num_branches, num_hybrids, num_leaves)
         }
-        Some(trie_node.Hybrid) -> {
+        Some(node.Hybrid) -> {
           let num_hybrids = num_hybrids + 1
           count_nodes_while(trie, stack, num_branches, num_hybrids, num_leaves)
         }
-        Some(trie_node.Leaf) -> {
+        Some(node.Leaf) -> {
           let num_leaves = num_leaves + 1
           count_nodes_while(trie, stack, num_branches, num_hybrids, num_leaves)
         }
@@ -212,7 +212,7 @@ fn count_nodes_while(
 }
 
 fn get_node(
-  trie: MerkleRadixTrie(store, data),
+  trie: MerkleRadixTrie(store, meta, data),
   key: KeyNibbles,
 ) -> Option(TrieNode) {
   trie.table
@@ -220,29 +220,29 @@ fn get_node(
   |> result.replace_error(
     "Node not found for key " <> key |> key_nibbles.to_string(),
   )
-  |> result.map(trie_node.deserialize_all)
+  |> result.map(node.deserialize_all)
   |> result.flatten()
   |> result.map(fn(node) { TrieNode(..node, key: key) })
   |> option.from_result()
 }
 
 fn put_node(
-  trie: MerkleRadixTrie(store, data),
+  trie: MerkleRadixTrie(store, meta, data),
   node: TrieNode,
-) -> MerkleRadixTrie(store, data) {
+) -> MerkleRadixTrie(store, meta, data) {
   let table =
     trie.table
     |> trie.table.set(
       node.key |> key_nibbles.serialize_to_vec(),
-      node |> trie_node.serialize_to_vec(),
+      node |> node.serialize_to_vec(),
     )
   MerkleRadixTrie(..trie, table:)
 }
 
 fn remove_node(
-  trie: MerkleRadixTrie(store, data),
+  trie: MerkleRadixTrie(store, meta, data),
   key: KeyNibbles,
-) -> MerkleRadixTrie(store, data) {
+) -> MerkleRadixTrie(store, meta, data) {
   let table =
     trie.table |> trie.table.delete(key |> key_nibbles.serialize_to_vec())
   MerkleRadixTrie(..trie, table:)
@@ -251,14 +251,14 @@ fn remove_node(
 /// Get the value at the given key. If there's no leaf or hybrid node at the given key then it
 /// returns None.
 pub fn get(
-  trie: MerkleRadixTrie(store, data),
+  trie: MerkleRadixTrie(store, meta, data),
   key key: KeyNibbles,
 ) -> Option(data) {
   get_raw(trie, key) |> option.map(trie.deserializer)
 }
 
 fn get_raw(
-  trie: MerkleRadixTrie(store, data),
+  trie: MerkleRadixTrie(store, meta, data),
   key: KeyNibbles,
 ) -> Option(BitArray) {
   trie
@@ -270,20 +270,20 @@ fn get_raw(
 /// Insert a value into the Merkle Radix Trie at the given key. If the key already exists then
 /// it will overwrite it. You can't use this function to check the existence of a given key.
 pub fn put(
-  trie: MerkleRadixTrie(store, data),
+  trie: MerkleRadixTrie(store, meta, data),
   key key: KeyNibbles,
   value value: data,
-) -> MerkleRadixTrie(store, data) {
+) -> MerkleRadixTrie(store, meta, data) {
   trie |> put_raw(key, value |> trie.serializer)
 }
 
 /// Insert a value into the Merkle Radix Trie at the given key. If the key already exists then
 /// it will overwrite it. You can't use this function to check the existence of a given key.
 fn put_raw(
-  trie: MerkleRadixTrie(store, data),
+  trie: MerkleRadixTrie(store, meta, data),
   key: KeyNibbles,
   value: BitArray,
-) -> MerkleRadixTrie(store, data) {
+) -> MerkleRadixTrie(store, meta, data) {
   // Start by getting the root node.
   let assert Some(cur_node) = trie |> get_root()
     as "Merkle Radix Trie must have a root node!"
@@ -298,12 +298,12 @@ fn put_raw(
 }
 
 fn put_raw_loop(
-  trie: MerkleRadixTrie(store, data),
+  trie: MerkleRadixTrie(store, meta, data),
   cur_node: TrieNode,
   root_path: List(TrieNode),
   key: KeyNibbles,
   value: BitArray,
-) -> #(MerkleRadixTrie(store, data), List(TrieNode), CountUpdates) {
+) -> #(MerkleRadixTrie(store, meta, data), List(TrieNode), CountUpdates) {
   case cur_node.key |> key_nibbles.is_prefix_of(key) {
     // If the current node key is no longer a prefix for the given key then we need to
     // split the node.
@@ -315,8 +315,8 @@ fn put_raw_loop(
         True -> {
           // The new node is the parent of the current node. Thus it needs to be a hybrid node.
           let assert Ok(new_node) =
-            trie_node.new_leaf(key, value)
-            |> trie_node.put_child_no_hash(cur_node.key)
+            node.new_leaf(key, value)
+            |> node.put_child_no_hash(cur_node.key)
           let trie = trie |> put_node(new_node)
 
           // Push the new node into the root path.
@@ -327,20 +327,17 @@ fn put_raw_loop(
         }
         False -> {
           // The new node is a sibling of the current node. Thus it is a leaf node.
-          let new_node = trie_node.new_leaf(key, value)
+          let new_node = node.new_leaf(key, value)
           let trie = trie |> put_node(new_node)
 
           // We insert a new branch node as the parent of both the current node and the
           // new node.
           let assert Ok(new_parent) =
-            trie_node.new_empty(cur_node.key |> key_nibbles.common_prefix(key))
-            |> trie_node.put_child_no_hash(cur_node.key)
+            node.new_empty(cur_node.key |> key_nibbles.common_prefix(key))
+            |> node.put_child_no_hash(cur_node.key)
             |> result.map(fn(new_parent) {
               new_parent
-              |> trie_node.put_child(
-                new_node.key,
-                new_node |> trie_node.hash_assert(),
-              )
+              |> node.put_child(new_node.key, new_node |> node.hash_assert())
             })
             |> result.flatten()
           let trie = trie |> put_node(new_parent)
@@ -361,13 +358,13 @@ fn put_raw_loop(
       case cur_node.key |> key_nibbles.equals(key) {
         True -> {
           // Update the node and store it.
-          let prev_kind = cur_node |> trie_node.kind()
+          let prev_kind = cur_node |> node.kind()
           let assert Ok(#(cur_node, _old_value)) =
-            cur_node |> trie_node.put_value(value)
+            cur_node |> node.put_value(value)
           let trie = trie |> put_node(cur_node)
 
           let count_updates =
-            count_updates.from_update(prev_kind, cur_node |> trie_node.kind())
+            count_updates.from_update(prev_kind, cur_node |> node.kind())
           // Push the node into the root path.
           let root_path = root_path |> list.append([cur_node])
           // break
@@ -375,29 +372,23 @@ fn put_raw_loop(
         }
         False -> {
           // Try to find a child of the current node that matches our key.
-          case cur_node |> trie_node.child_key(key) {
+          case cur_node |> node.child_key(key) {
             // If no matching child exists, add a new child to the current node.
             Error(_) -> {
               // Create and store the new node.
-              let new_node = trie_node.new_leaf(key, value)
+              let new_node = node.new_leaf(key, value)
               let trie = trie |> put_node(new_node)
 
               // Update the parent node and store it.
-              let old_kind = cur_node |> trie_node.kind()
+              let old_kind = cur_node |> node.kind()
               let assert Ok(cur_node) =
                 cur_node
-                |> trie_node.put_child(
-                  new_node.key,
-                  new_node |> trie_node.hash_assert(),
-                )
+                |> node.put_child(new_node.key, new_node |> node.hash_assert())
               let trie = trie |> put_node(cur_node)
 
               let count_updates =
                 CountUpdates(..count_updates.default(), leaves: 1)
-                |> count_updates.apply_update(
-                  old_kind,
-                  cur_node |> trie_node.kind(),
-                )
+                |> count_updates.apply_update(old_kind, cur_node |> node.kind())
               // Push the parent node into the root path.
               let root_path = root_path |> list.append([cur_node])
               // break
@@ -423,9 +414,9 @@ fn put_raw_loop(
 /// then this function just returns silently. You can't use this to check the existence of a
 /// given prefix.
 pub fn remove(
-  trie: MerkleRadixTrie(store, data),
+  trie: MerkleRadixTrie(store, meta, data),
   key: KeyNibbles,
-) -> MerkleRadixTrie(store, data) {
+) -> MerkleRadixTrie(store, meta, data) {
   trie |> remove_raw(key)
 }
 
@@ -433,9 +424,9 @@ pub fn remove(
 /// then this function just returns silently. You can't use this to check the existence of a
 /// given prefix.
 fn remove_raw(
-  trie: MerkleRadixTrie(store, data),
+  trie: MerkleRadixTrie(store, meta, data),
   key: KeyNibbles,
-) -> MerkleRadixTrie(store, data) {
+) -> MerkleRadixTrie(store, meta, data) {
   // Start by getting the root node.
   let assert Some(cur_node) = trie |> get_root()
     as "Merkle Radix Trie must have a root node!"
@@ -471,11 +462,11 @@ fn remove_raw(
 }
 
 fn remove_raw_loop(
-  trie: MerkleRadixTrie(store, data),
+  trie: MerkleRadixTrie(store, meta, data),
   cur_node: TrieNode,
   root_path: List(TrieNode),
   key: KeyNibbles,
-) -> #(MerkleRadixTrie(store, data), List(TrieNode), Bool) {
+) -> #(MerkleRadixTrie(store, meta, data), List(TrieNode), Bool) {
   case cur_node.key |> key_nibbles.is_prefix_of(key) {
     False -> {
       // If the current node key is no longer a prefix for the given key then the key doesn't
@@ -489,21 +480,17 @@ fn remove_raw_loop(
       case cur_node.key |> key_nibbles.equals(key) {
         True -> {
           // Remove the value from the node.
-          let prev_kind = cur_node |> trie_node.kind()
-          let #(cur_node, _old_value) = cur_node |> trie_node.take_value()
+          let prev_kind = cur_node |> node.kind()
+          let #(cur_node, _old_value) = cur_node |> node.take_value()
 
-          case
-            cur_node |> trie_node.is_root()
-            || cur_node |> trie_node.has_children()
-          {
+          case cur_node |> node.is_root() || cur_node |> node.has_children() {
             True -> {
               // Node was a hybrid node and is now a branch node.
-              let num_children =
-                cur_node |> trie_node.iter_children() |> iv.length()
+              let num_children = cur_node |> node.iter_children() |> iv.length()
 
               // If it has only a single child and isn't the root node, merge it with that child.
               let #(trie, root_path, count_updates) = case
-                num_children == 1 && !{ cur_node |> trie_node.is_root() }
+                num_children == 1 && !{ cur_node |> node.is_root() }
               {
                 True -> {
                   // Remove the node from the database.
@@ -512,10 +499,10 @@ fn remove_raw_loop(
                   // Get the node's only child and add it to the root path.
                   let assert Ok(only_child_key) =
                     cur_node
-                    |> trie_node.iter_children()
+                    |> node.iter_children()
                     |> iv.first()
                     |> result.map(fn(child) {
-                      child |> trie_node_child.key(cur_node.key)
+                      child |> node_child.key(cur_node.key)
                     })
 
                   let assert Some(only_child) = trie |> get_node(only_child_key)
@@ -537,7 +524,7 @@ fn remove_raw_loop(
                   let count_updates =
                     count_updates.from_update(
                       prev_kind,
-                      cur_node |> trie_node.kind(),
+                      cur_node |> node.kind(),
                     )
 
                   // Update the node and add it to the root path.
@@ -563,7 +550,7 @@ fn remove_raw_loop(
         }
         False -> {
           // Try to find a child of the current node that matches our key.
-          case cur_node |> trie_node.child_key(key) {
+          case cur_node |> node.child_key(key) {
             // If no matching child exists, then the key doesn't exist and we stop here.
             Error(_) -> {
               // return
@@ -587,52 +574,49 @@ fn remove_raw_loop(
 
 // remove_raw_while(trie, root_path |> list.reverse(), child_key, count_updates)
 fn remove_raw_while(
-  trie: MerkleRadixTrie(store, data),
+  trie: MerkleRadixTrie(store, meta, data),
   root_path_reversed: List(TrieNode),
   child_key: KeyNibbles,
   count_updates: CountUpdates,
-) -> MerkleRadixTrie(store, data) {
+) -> MerkleRadixTrie(store, meta, data) {
   case root_path_reversed {
     [] -> {
       trie
     }
     [parent_node, ..root_path_reversed] -> {
       // Remove the child from the parent node.
-      let prev_parent_kind = parent_node |> trie_node.kind()
-      let assert Ok(parent_node) =
-        parent_node |> trie_node.remove_child(child_key)
+      let prev_parent_kind = parent_node |> node.kind()
+      let assert Ok(parent_node) = parent_node |> node.remove_child(child_key)
       let count_updates =
         count_updates
         |> count_updates.apply_update(
           prev_parent_kind,
-          parent_node |> trie_node.kind(),
+          parent_node |> node.kind(),
         )
 
       // Get the number of children of the node.
-      let num_children = parent_node |> trie_node.iter_children() |> iv.length()
+      let num_children = parent_node |> node.iter_children() |> iv.length()
 
       // If the node has only a single child (and it isn't the root node), merge it with the
       // child.
       case
         num_children == 1
-        && !{ parent_node |> trie_node.is_root() }
-        && !{ parent_node |> trie_node.is_hybrid() }
+        && !{ parent_node |> node.is_root() }
+        && !{ parent_node |> node.is_hybrid() }
       {
         True -> {
           // Remove the node from the database.
           let trie = trie |> remove_node(parent_node.key)
           let count_updates =
             count_updates
-            |> count_updates.apply_update(parent_node |> trie_node.kind(), None)
+            |> count_updates.apply_update(parent_node |> node.kind(), None)
 
           // Get the node's only child and add it to the root path.
           let assert Ok(only_child_key) =
             parent_node
-            |> trie_node.iter_children()
+            |> node.iter_children()
             |> iv.first()
-            |> result.map(fn(child) {
-              child |> trie_node_child.key(parent_node.key)
-            })
+            |> result.map(fn(child) { child |> node_child.key(parent_node.key) })
 
           let assert Some(only_child) = trie |> get_node(only_child_key)
 
@@ -647,7 +631,7 @@ fn remove_raw_while(
           trie
         }
         False -> {
-          case parent_node |> trie_node.is_empty() {
+          case parent_node |> node.is_empty() {
             // If the node has any children, or it is either the root or a hybrid node, we just store the
             // parent node in the database and the root path. Then we update the keys and hashes of
             // of the root path.
@@ -673,10 +657,7 @@ fn remove_raw_while(
               let trie = trie |> remove_node(parent_node.key)
               let count_updates =
                 count_updates
-                |> count_updates.apply_update(
-                  parent_node |> trie_node.kind(),
-                  None,
-                )
+                |> count_updates.apply_update(parent_node |> node.kind(), None)
               let child_key = parent_node.key
 
               remove_raw_while(
@@ -694,7 +675,7 @@ fn remove_raw_while(
 }
 
 // pub fn get_chunk_with_proof(
-//   trie: MerkleRadixTrie(store, data),
+//   trie: MerkleRadixTrie(store, meta, data),
 //   keys_from: KeyNibbles,
 //   limit: Int,
 // ) -> TrieChunk {
@@ -702,9 +683,9 @@ fn remove_raw_while(
 // }
 
 // fn clear_stumps(
-//   trie: MerkleRadixTrie(store, data),
+//   trie: MerkleRadixTrie(store, meta, data),
 //   keys_from: KeyNibbles,
-// ) -> MerkleRadixTrie(store, data) {
+// ) -> MerkleRadixTrie(store, meta, data) {
 //   todo
 // }
 
@@ -712,72 +693,72 @@ fn remove_raw_while(
 // /// These stumps are stored in the existing nodes to mark the (yet) missing parts of the partial tree.
 // /// We can know which children are missing by looking at the trie proof of this path.
 // fn mark_stumps(
-//   trie: MerkleRadixTrie(store, data),
+//   trie: MerkleRadixTrie(store, meta, data),
 //   keys_from: KeyNibbles,
 //   last_item_proof: List(TrieProofNode),
-// ) -> Result(MerkleRadixTrie(store, data), TrieError) {
+// ) -> Result(MerkleRadixTrie(store, meta, data), TrieError) {
 //   todo
 // }
 
 // /// When pushing a chunk the correct behavior may result in an applied chunk or in an ignored chunk.
 // /// `start_key` is inclusive and is meant to check if the chunk is a consecutive chunk.
 // pub fn put_chunk(
-//   trie: MerkleRadixTrie(store, data),
+//   trie: MerkleRadixTrie(store, meta, data),
 //   start_key: KeyNibbles,
 //   chunk: TrieChunk,
 //   expected_hash: BitArray,
-// ) -> Result(#(MerkleRadixTrie(store, data), TrieChunkPushResult), TrieError) {
+// ) -> Result(#(MerkleRadixTrie(store, meta, data), TrieChunkPushResult), TrieError) {
 //   todo
 // }
 
 // /// `start_key` is inclusive and marks the first key to be removed.
 // pub fn remove_chunk(
-//   trie: MerkleRadixTrie(store, data),
+//   trie: MerkleRadixTrie(store, meta, data),
 //   start_key: KeyNibbles,
-// ) -> Result(MerkleRadixTrie(store, data), TrieError) {
+// ) -> Result(MerkleRadixTrie(store, meta, data), TrieError) {
 //   todo
 // }
 
 // pub fn get_proof(
-//   trie: MerkleRadixTrie(store, data),
+//   trie: MerkleRadixTrie(store, meta, data),
 //   keys: List(KeyNibbles),
 // ) -> Result(TrieProof, TrieError) {
 //   todo
 // }
 
 pub fn update_root(
-  trie: MerkleRadixTrie(store, data),
-) -> MerkleRadixTrie(store, data) {
+  trie: MerkleRadixTrie(store, meta, data),
+) -> MerkleRadixTrie(store, meta, data) {
   let #(trie, _root_hash) = trie |> update_hashes(key_nibbles.root())
   trie
 }
 
 // pub fn apply_diff(
-//   trie: MerkleRadixTrie(store, data),
+//   trie: MerkleRadixTrie(store, meta, data),
 //   diff: TrieDiff,
-// ) -> Result(#(MerkleRadixTrie(store, data), RevertTrieDiff), TrieError) {
+// ) -> Result(#(MerkleRadixTrie(store, meta, data), RevertTrieDiff), TrieError) {
 //   todo
 // }
 
 // pub fn revert_diff(
-//   trie: MerkleRadixTrie(store, data),
+//   trie: MerkleRadixTrie(store, meta, data),
 //   diff: RevertTrieDiff,
-// ) -> Result(MerkleRadixTrie(store, data), TrieError) {
+// ) -> Result(MerkleRadixTrie(store, meta, data), TrieError) {
 //   todo
 // }
 
 /// Returns the root node, if there is one.
-fn get_root(trie: MerkleRadixTrie(store, data)) -> Option(TrieNode) {
+fn get_root(trie: MerkleRadixTrie(store, meta, data)) -> Option(TrieNode) {
   trie |> get_node(key_nibbles.root())
 }
 
 /// Updates the keys for a chain of nodes and marks those nodes as dirty. It assumes that the
 /// path starts at the root node and that each consecutive node is a child of the previous node.
 fn update_keys(
-  trie: MerkleRadixTrie(store, data),
+  trie: MerkleRadixTrie(store, meta, data),
   root_path: List(TrieNode),
   count_updates: CountUpdates,
-) -> MerkleRadixTrie(store, data) {
+) -> MerkleRadixTrie(store, meta, data) {
   let only_root_path_needs_update = root_path |> list.length() == 1
   let assert Ok(root) = root_path |> list.first()
     as "Root path must not be empty"
@@ -811,11 +792,11 @@ fn update_keys(
         |> list.fold(#(trie, child_node), fn(acc, parent_node) {
           let #(trie, child_node) = acc
           let assert Ok(parent_node) =
-            parent_node |> trie_node.put_child_no_hash(child_node.key)
+            parent_node |> node.put_child_no_hash(child_node.key)
           let trie = trie |> put_node(parent_node)
           #(trie, parent_node)
         })
-      let assert True = last_node |> trie_node.is_root()
+      let assert True = last_node |> node.is_root()
       trie
     }
   }
@@ -823,13 +804,13 @@ fn update_keys(
 
 /// Updates the hashes of all dirty nodes in the subtree specified by `key`.
 fn update_hashes(
-  trie: MerkleRadixTrie(store, data),
+  trie: MerkleRadixTrie(store, meta, data),
   key: KeyNibbles,
-) -> #(MerkleRadixTrie(store, data), BitArray) {
+) -> #(MerkleRadixTrie(store, meta, data), BitArray) {
   let assert Some(node) = trie |> get_node(key)
-  case node |> trie_node.has_children() {
+  case node |> node.has_children() {
     False -> {
-      let hash = node |> trie_node.hash_assert()
+      let hash = node |> node.hash_assert()
       #(trie, hash)
     }
     True -> {
@@ -840,10 +821,10 @@ fn update_hashes(
           let #(trie, maybe_child) = case maybe_child {
             None -> #(trie, None)
             Some(child) -> {
-              case child |> trie_node_child.has_hash() {
+              case child |> node_child.has_hash() {
                 True -> #(trie, Some(child))
                 False -> {
-                  let child_key = child |> trie_node_child.key(key)
+                  let child_key = child |> node_child.key(key)
                   // TODO: Try changing this recursion to benefit from tail call optimization.
                   let #(trie, hash) = trie |> update_hashes(child_key)
                   #(trie, Some(TrieNodeChild(..child, hash:)))
@@ -855,7 +836,7 @@ fn update_hashes(
         })
       let node = TrieNode(..node, children:)
       let trie = trie |> put_node(node)
-      let hash = node |> trie_node.hash_assert()
+      let hash = node |> node.hash_assert()
       #(trie, hash)
     }
   }
@@ -863,7 +844,7 @@ fn update_hashes(
 
 // /// Returns the last key containing a value before the given key.
 // fn get_predecessor(
-//   trie: MerkleRadixTrie(store, data),
+//   trie: MerkleRadixTrie(store, meta, data),
 //   key: KeyNibbles,
 // ) -> Option(KeyNibbles) {
 //   todo
@@ -871,8 +852,8 @@ fn update_hashes(
 
 // /// Returns the nodes of the chunk of the Merkle Radix Trie that starts at the key `start` and
 // /// has size `size`. This is used by the `get_chunk` and `get_chunk_proof` functions.
-// fn get_trie_chunk(
-//   trie: MerkleRadixTrie(store, data),
+// fn get_chunk(
+//   trie: MerkleRadixTrie(store, meta, data),
 //   start: KeyNibbles,
 //   size: Int,
 // ) -> List(TrieNode) {
@@ -881,7 +862,7 @@ fn update_hashes(
 
 /// This iterator is meant to start at `start_key` and finish at `end_key`, both of these are inclusive.
 pub fn iter_nodes(
-  trie: MerkleRadixTrie(store, data),
+  trie: MerkleRadixTrie(store, meta, data),
   start_key start_key: KeyNibbles,
   end_key end_key: KeyNibbles,
 ) -> Yielder(data) {
@@ -894,18 +875,7 @@ pub fn iter_nodes(
 
   let keys =
     trie.table
-    |> trie.table.keys()
-    |> list.filter(fn(key) {
-      {
-        { key |> bit_array.compare(start_key) == order.Gt }
-        || { key |> bit_array.compare(start_key) == order.Eq }
-      }
-      && {
-        { key |> bit_array.compare(end_key) == order.Lt }
-        || { key |> bit_array.compare(end_key) == order.Eq }
-      }
-    })
-    |> list.sort(bit_array.compare)
+    |> trie.table.keys(start_key, end_key)
 
   yielder.unfold(keys, fn(acc) {
     case acc {

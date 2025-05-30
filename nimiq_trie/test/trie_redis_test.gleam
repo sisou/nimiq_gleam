@@ -6,12 +6,12 @@ import gleeunit/should
 import radish
 
 import account
-import backend
-import key_nibbles
-import trie/trie
+import nimiq/key_nibbles
+import nimiq/trie
+import nimiq/trie/backend
 
 /// Adds one account to the trie and checks the root hash.
-pub fn simple_trie_redis_test() {
+pub fn simple_redis_test() {
   let account = account.Basic(100_000)
 
   // NQ05 U1RF QJNH JCS1 RDQX 4M3Y 60KR K6CN 5LKC

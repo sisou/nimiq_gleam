@@ -9,7 +9,7 @@ import gleam/string
 
 import iv
 
-import utils/serde
+import nimiq/utils/serde
 
 pub type KeyNibbles {
   KeyNibbles(nibbles: iv.Array(Int))

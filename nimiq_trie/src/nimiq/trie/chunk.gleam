@@ -1,8 +1,8 @@
 import gleam/option.{type Option}
 
-import key_nibbles.{type KeyNibbles}
-import trie/trie_item.{type TrieItem}
-import trie/trie_proof.{type TrieProof}
+import nimiq/key_nibbles.{type KeyNibbles}
+import nimiq/trie/item.{type TrieItem}
+import nimiq/trie/proof.{type TrieProof}
 
 pub type TrieChunk {
   TrieChunk(

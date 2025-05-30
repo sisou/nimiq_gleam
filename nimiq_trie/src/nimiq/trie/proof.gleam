@@ -1,4 +1,4 @@
-import trie/trie_proof_node.{type TrieProofNode}
+import nimiq/trie/proof_node.{type TrieProofNode}
 
 pub type TrieProof {
   TrieProof(

@@ -6,12 +6,12 @@ import gleam/result
 
 import iv
 
-import blake2b
-import key_nibbles.{type KeyNibbles}
-import trie/root_data.{type RootData, RootData}
-import trie/trie_error.{type TrieError}
-import trie/trie_node_child.{type TrieNodeChild, TrieNodeChild}
-import utils/serde
+import nimiq/blake2b
+import nimiq/key_nibbles.{type KeyNibbles}
+import nimiq/trie/error.{type TrieError}
+import nimiq/trie/node_child.{type TrieNodeChild, TrieNodeChild}
+import nimiq/trie/root_data.{type RootData, RootData}
+import nimiq/utils/serde
 
 fn no_children() -> iv.Array(Option(TrieNodeChild)) {
   iv.repeat(None, 16)
@@ -102,7 +102,7 @@ pub fn child_index(
         <> node.key |> key_nibbles.to_string()
         <> "!",
       )
-      Error(trie_error.WrongPrefix)
+      Error(error.WrongPrefix)
     }
     True -> {
       // Key length has to be smaller or equal to the child prefix length, so this will only panic
@@ -126,7 +126,7 @@ pub fn child(
   |> result.map(fn(index) {
     case node.children |> iv.get(index) {
       Ok(Some(child)) -> Ok(child)
-      _ -> Error(trie_error.ChildDoesNotExist)
+      _ -> Error(error.ChildDoesNotExist)
     }
   })
   |> result.flatten()
@@ -138,7 +138,7 @@ pub fn child_key(
 ) -> Result(KeyNibbles, TrieError) {
   node
   |> child(child_prefix)
-  |> result.map(fn(child) { child |> trie_node_child.key(node.key) })
+  |> result.map(fn(child) { child |> node_child.key(node.key) })
 }
 
 /// Sets the current node's child with the given prefix.
@@ -152,7 +152,7 @@ pub fn put_child(
   node.children
   |> iv.set(idx, Some(TrieNodeChild(suffix:, hash: child_hash)))
   |> result.map(fn(children) { TrieNode(..node, children:) })
-  |> result.replace_error(trie_error.ChildDoesNotExist)
+  |> result.replace_error(error.ChildDoesNotExist)
 }
 
 pub fn put_child_no_hash(
@@ -171,7 +171,7 @@ pub fn remove_child(
   node.children
   |> iv.set(idx, None)
   |> result.map(fn(children) { TrieNode(..node, children:) })
-  |> result.replace_error(trie_error.ChildDoesNotExist)
+  |> result.replace_error(error.ChildDoesNotExist)
 }
 
 pub fn put_value(
@@ -179,7 +179,7 @@ pub fn put_value(
   value: BitArray,
 ) -> Result(#(TrieNode, Option(BitArray)), TrieError) {
   case is_root(node) {
-    True -> Error(trie_error.RootCantHaveValue)
+    True -> Error(error.RootCantHaveValue)
     False -> #(TrieNode(..node, value: Some(value)), node.value) |> Ok
   }
 }
@@ -195,7 +195,7 @@ pub fn iter_children(node: TrieNode) -> iv.Array(TrieNodeChild) {
 fn can_hash(node: TrieNode) -> Bool {
   node
   |> iter_children()
-  |> iv.all(fn(child) { child |> trie_node_child.has_hash() })
+  |> iv.all(fn(child) { child |> node_child.has_hash() })
 }
 
 pub fn hash(node: TrieNode) -> Option(BitArray) {
@@ -285,7 +285,7 @@ fn serialize_children(
       Some(child) -> {
         acc
         |> serde.serialize_u8(1)
-        |> trie_node_child.serialize(child)
+        |> node_child.serialize(child)
       }
       None -> acc |> serde.serialize_u8(0)
     }
@@ -393,7 +393,7 @@ fn deserialize_child(
       use #(child_option, rest) <- result.try(serde.deserialize_u8(buf))
       case child_option {
         1 -> {
-          use #(child, rest) <- result.try(trie_node_child.deserialize(rest))
+          use #(child, rest) <- result.try(node_child.deserialize(rest))
           deserialize_child(children |> iv.append(Some(child)), idx + 1, rest)
         }
         0 -> deserialize_child(children |> iv.append(None), idx + 1, rest)

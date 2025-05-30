@@ -1,7 +1,7 @@
 import gleam/option.{type Option, None, Some}
 
-import trie/root_data.{type RootData, RootData}
-import trie/trie_node.{type TrieNodeKind}
+import nimiq/trie/node.{type TrieNodeKind}
+import nimiq/trie/root_data.{type RootData, RootData}
 
 pub type CountUpdates {
   CountUpdates(branches: Int, hybrids: Int, leaves: Int)
@@ -26,22 +26,20 @@ pub fn apply_update(
   let update = case prev {
     Some(kind) ->
       case kind {
-        trie_node.Root -> update
-        trie_node.Branch ->
-          CountUpdates(..update, branches: update.branches - 1)
-        trie_node.Hybrid -> CountUpdates(..update, hybrids: update.hybrids - 1)
-        trie_node.Leaf -> CountUpdates(..update, leaves: update.leaves - 1)
+        node.Root -> update
+        node.Branch -> CountUpdates(..update, branches: update.branches - 1)
+        node.Hybrid -> CountUpdates(..update, hybrids: update.hybrids - 1)
+        node.Leaf -> CountUpdates(..update, leaves: update.leaves - 1)
       }
     None -> update
   }
   let update = case cur {
     Some(kind) ->
       case kind {
-        trie_node.Root -> update
-        trie_node.Branch ->
-          CountUpdates(..update, branches: update.branches + 1)
-        trie_node.Hybrid -> CountUpdates(..update, hybrids: update.hybrids + 1)
-        trie_node.Leaf -> CountUpdates(..update, leaves: update.leaves + 1)
+        node.Root -> update
+        node.Branch -> CountUpdates(..update, branches: update.branches + 1)
+        node.Hybrid -> CountUpdates(..update, hybrids: update.hybrids + 1)
+        node.Leaf -> CountUpdates(..update, leaves: update.leaves + 1)
       }
     None -> update
   }

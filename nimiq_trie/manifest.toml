@@ -2,6 +2,7 @@
 # You typically do not need to edit this file
 
 packages = [
+  { name = "base_x_gleam", version = "0.1.2", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "base_x_gleam", source = "hex", outer_checksum = "E7814D8F5165C923CCBA53885DC64FB17F5DEB23A2EB4559E5D1C77024EE6CF2" },
   { name = "blake2", version = "1.0.4", build_tools = ["mix"], requirements = [], otp_app = "blake2", source = "hex", outer_checksum = "E9F4120D163BA14D86304195E50745FA18483E6AD2BE94C864AE449BBDD6A189" },
   { name = "gleam_deque", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_deque", source = "hex", outer_checksum = "64D77068931338CF0D0CB5D37522C3E3CCA7CB7D6C5BACB41648B519CC0133C7" },
   { name = "gleam_erlang", version = "0.34.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_erlang", source = "hex", outer_checksum = "0C38F2A128BAA0CEF17C3000BD2097EB80634E239CE31A86400C4416A5D0FDCC" },
@@ -17,6 +18,7 @@ packages = [
 ]
 
 [requirements]
+base_x_gleam = { version = ">= 0.1.2 and < 1.0.0" }
 blake2 = { version = ">= 1.0.4 and < 2.0.0" }
 gleam_stdlib = { version = ">= 0.44.0 and < 2.0.0" }
 gleam_yielder = { version = ">= 1.1.0 and < 2.0.0" }
