@@ -1,4 +1,3 @@
-import base_x_gleam
 import gleam/bit_array
 import gleam/dict.{type Dict}
 import gleam/list
@@ -6,33 +5,49 @@ import gleam/order
 import gleam/result
 import gleam/string
 
+import base_x_gleam
 import radish
 import radish/client as radish_client
 
-pub type Backend(store, meta) {
-  Backend(
-    store: store,
-    meta: meta,
-    get: fn(Backend(store, meta), BitArray) -> Result(BitArray, Nil),
-    set: fn(Backend(store, meta), BitArray, BitArray) -> Backend(store, meta),
-    delete: fn(Backend(store, meta), BitArray) -> Backend(store, meta),
-    keys: fn(Backend(store, meta), BitArray, BitArray) -> List(BitArray),
+pub type Store {
+  Memory(dict: Dict(BitArray, BitArray))
+  Redis(
+    client: radish_client.Client,
+    encode: fn(BitArray) -> String,
+    decode: fn(String) -> Result(BitArray, Nil),
   )
 }
 
-pub fn memory() -> Backend(Dict(BitArray, BitArray), Nil) {
+pub type Backend {
   Backend(
-    store: dict.new(),
-    meta: Nil,
-    get: fn(backend, key) { backend.store |> dict.get(key) },
+    store: Store,
+    get: fn(Backend, BitArray) -> Result(BitArray, Nil),
+    set: fn(Backend, BitArray, BitArray) -> Backend,
+    delete: fn(Backend, BitArray) -> Backend,
+    keys: fn(Backend, BitArray, BitArray) -> List(BitArray),
+  )
+}
+
+pub fn memory() -> Backend {
+  Backend(
+    store: Memory(dict: dict.new()),
+    get: fn(backend, key) {
+      let assert Memory(dict:) = backend.store
+      dict |> dict.get(key)
+    },
     set: fn(backend, key, value) {
-      Backend(..backend, store: backend.store |> dict.insert(key, value))
+      let assert Memory(dict:) = backend.store
+      let dict = dict |> dict.insert(key, value)
+      Backend(..backend, store: Memory(dict:))
     },
     delete: fn(backend, key) {
-      Backend(..backend, store: backend.store |> dict.delete(key))
+      let assert Memory(dict:) = backend.store
+      let dict = dict |> dict.delete(key)
+      Backend(..backend, store: Memory(dict:))
     },
     keys: fn(backend, start_key, end_key) {
-      backend.store
+      let assert Memory(dict:) = backend.store
+      dict
       |> dict.keys()
       |> list.filter(fn(key) {
         {
@@ -60,7 +75,7 @@ pub fn redis(
   host: String,
   port: Int,
   options: List(radish.StartOption),
-) -> Backend(radish_client.Client, RedisMeta) {
+) -> Backend {
   // Extract the timeout option if it exists, defaulting to 1000 ms
   let timeout =
     options
@@ -72,7 +87,7 @@ pub fn redis(
     })
     |> result.unwrap(1000)
 
-  let assert Ok(redis) = radish.start(host, port, options)
+  let assert Ok(client) = radish.start(host, port, options)
 
   // Use a costom base64 encoding that preserves bit order
   // https://github.com/dominictarr/d64
@@ -82,39 +97,38 @@ pub fn redis(
   let assert Ok(#(encode, decode)) = base_x_gleam.generate(d64_alphabet)
 
   Backend(
-    store: redis,
-    meta: RedisMeta(encode:, decode:),
+    store: Redis(client:, encode:, decode:),
     get: fn(backend, key) {
-      backend.store
-      |> radish.get(key |> backend.meta.encode(), timeout)
+      let assert Redis(client:, encode:, decode:) = backend.store
+      client
+      |> radish.get(key |> encode(), timeout)
       |> result.replace_error(Nil)
-      |> result.map(backend.meta.decode)
+      |> result.map(decode)
       |> result.flatten()
     },
     set: fn(backend, key, value) {
+      let assert Redis(client:, encode:, ..) = backend.store
       let assert Ok(_) =
-        backend.store
-        |> radish.set(
-          key |> backend.meta.encode(),
-          value |> backend.meta.encode(),
-          timeout,
-        )
+        client
+        |> radish.set(key |> encode(), value |> encode(), timeout)
       backend
     },
     delete: fn(backend, key) {
+      let assert Redis(client:, encode:, ..) = backend.store
       let assert Ok(_) =
-        backend.store
-        |> radish.del([key |> backend.meta.encode()], timeout)
+        client
+        |> radish.del([key |> encode()], timeout)
       backend
     },
     keys: fn(backend, start_key, end_key) {
-      let start_key = start_key |> backend.meta.encode()
-      let end_key = end_key |> backend.meta.encode()
+      let assert Redis(client:, encode:, decode:) = backend.store
+      let start_key = start_key |> encode()
+      let end_key = end_key |> encode()
 
       let common_prefix =
         string_common_prefix(start_key, end_key) |> result.unwrap("*")
 
-      let assert Ok(keys) = backend.store |> radish.keys(common_prefix, timeout)
+      let assert Ok(keys) = client |> radish.keys(common_prefix, timeout)
 
       keys
       |> list.filter(fn(key) {
@@ -129,7 +143,7 @@ pub fn redis(
       })
       |> list.sort(string.compare)
       |> list.map(fn(key) {
-        let assert Ok(bytes) = backend.meta.decode(key)
+        let assert Ok(bytes) = decode(key)
         bytes
       })
     },
