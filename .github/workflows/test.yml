@@ -7,6 +7,11 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      valkey:
+        image: valkey/valkey:alpine
+        ports:
+          - 6379:6379
     strategy:
       matrix:
         package: [
@@ -17,6 +22,7 @@ jobs:
           nimiq_cli,
           nimiq_gleam,
           nimiq_serde,
+          nimiq_trie,
         ]
 
     steps:

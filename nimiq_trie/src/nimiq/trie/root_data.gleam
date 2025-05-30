@@ -1,7 +1,7 @@
 import gleam/bytes_tree.{type BytesTree}
 import gleam/result
 
-import nimiq/utils/serde
+import nimiq/serde
 
 pub type RootData {
   RootData(
