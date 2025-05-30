@@ -8,13 +8,13 @@ import nimiq/account/address.{type Address}
 import nimiq/coin.{type Coin, Coin}
 import nimiq/key/public_key
 import nimiq/key/signature
+import nimiq/serde
 import nimiq/transaction/network_id.{type NetworkId}
 import nimiq/transaction/signature_proof.{type SignatureProof}
 import nimiq/transaction/signature_proof_flags
 import nimiq/transaction/transaction_flags.{type TransactionFlags}
 import nimiq/transaction/transaction_format.{type TransactionFormat}
 import nimiq/utils/misc
-import nimiq/utils/serde
 
 pub type Transaction {
   Transaction(
@@ -46,13 +46,12 @@ pub fn deserialize(buf: BitArray) -> Result(#(Transaction, BitArray), String) {
         signature_alg,
       ))
       use #(recipient, rest) <- result.try(address.deserialize(rest))
-      use #(value, rest) <- result.try(serde.deserialize_int(rest, 64))
-      use #(fee, rest) <- result.try(serde.deserialize_int(rest, 64))
-      use #(validity_start_height, rest) <- result.try(serde.deserialize_int(
+      use #(value, rest) <- result.try(serde.deserialize_u64(rest))
+      use #(fee, rest) <- result.try(serde.deserialize_u64(rest))
+      use #(validity_start_height, rest) <- result.try(serde.deserialize_u32(
         rest,
-        32,
       ))
-      use #(network_id, rest) <- result.try(serde.deserialize_int(rest, 8))
+      use #(network_id, rest) <- result.try(serde.deserialize_u8(rest))
       use #(signature, rest) <- result.try(signature.deserialize_typed(
         rest,
         signature_alg,
@@ -97,19 +96,18 @@ pub fn deserialize(buf: BitArray) -> Result(#(Transaction, BitArray), String) {
     }
     transaction_format.Extended -> {
       use #(sender, rest) <- result.try(address.deserialize(rest))
-      use #(sender_type, rest) <- result.try(serde.deserialize_int(rest, 8))
+      use #(sender_type, rest) <- result.try(serde.deserialize_u8(rest))
       use #(sender_data, rest) <- result.try(serde.deserialize_bytes(rest))
       use #(recipient, rest) <- result.try(address.deserialize(rest))
-      use #(recipient_type, rest) <- result.try(serde.deserialize_int(rest, 8))
+      use #(recipient_type, rest) <- result.try(serde.deserialize_u8(rest))
       use #(recipient_data, rest) <- result.try(serde.deserialize_bytes(rest))
-      use #(value, rest) <- result.try(serde.deserialize_int(rest, 64))
-      use #(fee, rest) <- result.try(serde.deserialize_int(rest, 64))
-      use #(validity_start_height, rest) <- result.try(serde.deserialize_int(
+      use #(value, rest) <- result.try(serde.deserialize_u64(rest))
+      use #(fee, rest) <- result.try(serde.deserialize_u64(rest))
+      use #(validity_start_height, rest) <- result.try(serde.deserialize_u32(
         rest,
-        32,
       ))
-      use #(network_id, rest) <- result.try(serde.deserialize_int(rest, 8))
-      use #(flags, rest) <- result.try(serde.deserialize_int(rest, 8))
+      use #(network_id, rest) <- result.try(serde.deserialize_u8(rest))
+      use #(flags, rest) <- result.try(serde.deserialize_u8(rest))
       use #(proof, rest) <- result.try(serde.deserialize_bytes(rest))
 
       use network_id <- result.try(network_id.from_int(network_id))

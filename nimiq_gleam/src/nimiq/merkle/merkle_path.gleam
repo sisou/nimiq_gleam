@@ -4,7 +4,7 @@ import gleam/float
 import gleam/int
 import gleam/list
 import gleam/result
-import nimiq/utils/serde
+import nimiq/serde
 
 pub type MerklePath {
   MerklePath(nodes: List(MerklePathNode))
@@ -22,7 +22,7 @@ pub fn deserialize(buf: BitArray) -> Result(#(MerklePath, BitArray), String) {
   case buf {
     <<0, rest:bits>> -> Ok(#(empty(), rest))
     _ -> {
-      use #(length, rest) <- result.try(serde.deserialize_int(buf, 8))
+      use #(length, rest) <- result.try(serde.deserialize_u8(buf))
 
       let left_bits_byte_size =
         float.ceiling(int.to_float(length) /. 8.0) |> float.round()

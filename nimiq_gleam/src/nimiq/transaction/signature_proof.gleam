@@ -5,9 +5,9 @@ import gleam/result
 import nimiq/key/public_key.{type PublicKey, EcDsaPublicKey, EdDsaPublicKey}
 import nimiq/key/signature.{type Signature}
 import nimiq/merkle/merkle_path.{type MerklePath}
+import nimiq/serde
 import nimiq/transaction/signature_proof_algorithm.{type SignatureProofAlgorithm}
 import nimiq/transaction/signature_proof_flags.{type SignatureProofFlags}
-import nimiq/utils/serde
 
 pub type SignatureProof {
   SignatureProof(

@@ -10,6 +10,10 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nimiq_gleam
+
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1

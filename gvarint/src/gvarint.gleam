@@ -1,5 +1,3 @@
-// Bindings for https://hex.pm/packages/varint
-
 /// Encodes an unsigned integer using LEB128 compression.
 @external(erlang, "Elixir.Varint.LEB128", "encode")
 pub fn encode(num: Int) -> BitArray

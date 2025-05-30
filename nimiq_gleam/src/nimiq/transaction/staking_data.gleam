@@ -6,9 +6,9 @@ import gleam/result
 import nimiq/account/address.{type Address}
 import nimiq/coin.{type Coin}
 import nimiq/key/ed25519/public_key.{type PublicKey as Ed25519PublicKey}
+import nimiq/serde
 import nimiq/transaction/signature_proof.{type SignatureProof}
 import nimiq/utils/misc
-import nimiq/utils/serde
 
 pub type Blake2bHash =
   BitArray
@@ -68,7 +68,7 @@ pub type IncomingStakingData {
 pub fn deserialize(
   buf: BitArray,
 ) -> Result(#(IncomingStakingData, BitArray), String) {
-  use #(format, rest) <- result.try(serde.deserialize_int(buf, 8))
+  use #(format, rest) <- result.try(serde.deserialize_u8(buf))
   case format {
     0 -> {
       // CreateValidator
@@ -233,14 +233,14 @@ pub fn deserialize(
     }
     8 -> {
       // SetActiveStake
-      use #(new_active_balance, rest) <- result.try(serde.deserialize_coin(rest))
+      use #(new_active_balance, rest) <- result.try(coin.deserialize(rest))
       use #(proof, rest) <- result.try(signature_proof.deserialize(rest))
 
       Ok(#(SetActiveStake(new_active_balance, proof), rest))
     }
     9 -> {
       // RetireStake
-      use #(retire_stake, rest) <- result.try(serde.deserialize_coin(rest))
+      use #(retire_stake, rest) <- result.try(coin.deserialize(rest))
       use #(proof, rest) <- result.try(signature_proof.deserialize(rest))
 
       Ok(#(RetireStake(retire_stake, proof), rest))
@@ -269,7 +269,7 @@ pub fn serialize(builder: BytesTree, data: IncomingStakingData) -> BytesTree {
     ) -> {
       let builder =
         builder
-        |> serde.serialize_int(0, 8)
+        |> serde.serialize_u8(0)
         |> public_key.serialize(signing_key)
         |> serde.serialize_bitarray(voting_key)
         |> address.serialize(reward_address)
@@ -292,7 +292,7 @@ pub fn serialize(builder: BytesTree, data: IncomingStakingData) -> BytesTree {
     ) -> {
       let builder =
         builder
-        |> serde.serialize_int(1, 8)
+        |> serde.serialize_u8(1)
         |> serde.serialize_bool(option.is_some(new_signing_key))
       let builder = case new_signing_key {
         None -> builder
@@ -334,25 +334,25 @@ pub fn serialize(builder: BytesTree, data: IncomingStakingData) -> BytesTree {
     }
     DeactivateValidator(validator_address, proof) -> {
       builder
-      |> serde.serialize_int(2, 8)
+      |> serde.serialize_u8(2)
       |> address.serialize(validator_address)
       |> signature_proof.serialize(proof)
     }
     ReactivateValidator(validator_address, proof) -> {
       builder
-      |> serde.serialize_int(3, 8)
+      |> serde.serialize_u8(3)
       |> address.serialize(validator_address)
       |> signature_proof.serialize(proof)
     }
     RetireValidator(proof) -> {
       builder
-      |> serde.serialize_int(4, 8)
+      |> serde.serialize_u8(4)
       |> signature_proof.serialize(proof)
     }
     CreateStaker(delegation, proof) -> {
       let builder =
         builder
-        |> serde.serialize_int(5, 8)
+        |> serde.serialize_u8(5)
         |> serde.serialize_bool(option.is_some(delegation))
       let builder = case delegation {
         None -> builder
@@ -362,13 +362,13 @@ pub fn serialize(builder: BytesTree, data: IncomingStakingData) -> BytesTree {
     }
     AddStake(staker_address) -> {
       builder
-      |> serde.serialize_int(6, 8)
+      |> serde.serialize_u8(6)
       |> address.serialize(staker_address)
     }
     UpdateStaker(new_delegation, reactivate_all_stake, proof) -> {
       let builder =
         builder
-        |> serde.serialize_int(7, 8)
+        |> serde.serialize_u8(7)
         |> serde.serialize_bool(option.is_some(new_delegation))
       let builder = case new_delegation {
         None -> builder
@@ -380,14 +380,14 @@ pub fn serialize(builder: BytesTree, data: IncomingStakingData) -> BytesTree {
     }
     SetActiveStake(new_active_balance, proof) -> {
       builder
-      |> serde.serialize_int(8, 8)
-      |> serde.serialize_coin(new_active_balance)
+      |> serde.serialize_u8(8)
+      |> coin.serialize(new_active_balance)
       |> signature_proof.serialize(proof)
     }
     RetireStake(retire_stake, proof) -> {
       builder
-      |> serde.serialize_int(9, 8)
-      |> serde.serialize_coin(retire_stake)
+      |> serde.serialize_u8(9)
+      |> coin.serialize(retire_stake)
       |> signature_proof.serialize(proof)
     }
   }
