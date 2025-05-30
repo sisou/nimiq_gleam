@@ -1,0 +1,7 @@
+name = "tools"
+version = "0.0.1"
+
+[dependencies]
+choire = ">= 1.0.5 and < 2.0.0"
+
+[dev-dependencies]
