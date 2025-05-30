@@ -3,6 +3,7 @@ import gleam/bytes_tree.{type BytesTree}
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
+import gleam/string
 import nimiq/account/account_type.{type AccountType}
 import nimiq/address.{type Address}
 import nimiq/coin.{type Coin, Coin}
@@ -14,7 +15,6 @@ import nimiq/transaction/signature_proof.{type SignatureProof}
 import nimiq/transaction/signature_proof_flags
 import nimiq/transaction/transaction_flags.{type TransactionFlags}
 import nimiq/transaction/transaction_format.{type TransactionFormat}
-import nimiq/utils/misc
 
 pub type Transaction {
   Transaction(
@@ -294,5 +294,5 @@ pub fn serialize_to_bits(tx: Transaction) -> Result(BitArray, String) {
 
 pub fn to_hex(tx: Transaction) -> Result(String, String) {
   use bytes <- result.try(tx |> serialize_to_bits())
-  Ok(bytes |> misc.to_hex())
+  Ok(bytes |> bit_array.base16_encode() |> string.lowercase())
 }

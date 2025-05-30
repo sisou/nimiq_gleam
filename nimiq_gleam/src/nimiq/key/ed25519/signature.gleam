@@ -2,9 +2,9 @@ import ged25519
 import gleam/bit_array
 import gleam/bytes_tree.{type BytesTree}
 import gleam/result
+import gleam/string
 import nimiq/key/ed25519/private_key.{type PrivateKey}
 import nimiq/key/ed25519/public_key.{type PublicKey}
-import nimiq/utils/misc
 
 pub const size = 64
 
@@ -81,7 +81,7 @@ pub fn serialize_to_bits(sig: Signature) -> BitArray {
 }
 
 pub fn to_hex(sig: Signature) -> String {
-  sig |> serialize_to_bits() |> misc.to_hex()
+  sig |> serialize_to_bits() |> bit_array.base16_encode() |> string.lowercase()
 }
 
 pub fn to_base64(sig: Signature) -> String {

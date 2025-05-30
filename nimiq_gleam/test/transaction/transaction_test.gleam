@@ -1,6 +1,7 @@
 import gleam/bit_array
 import gleam/option.{None}
 import gleam/result
+import gleam/string
 import gleeunit/should
 import nimiq/account/account_type
 import nimiq/address
@@ -14,7 +15,6 @@ import nimiq/transaction/network_id
 import nimiq/transaction/signature_proof.{SignatureProof}
 import nimiq/transaction/transaction
 import nimiq/transaction/transaction_builder
-import nimiq/utils/misc
 
 pub fn serialize_basic_test() {
   // Transaction data is from my explanation of Nimiq's transaction serialization at
@@ -186,7 +186,9 @@ pub fn deserialize_basic_test() {
   let assert 100_000 = tx.validity_start_height
   let assert network_id.TestAlbatross = tx.network_id
   let assert "003b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da2900e97d14e5ab8b9e9b71f7d2952457810ff5c8c762ab92dded852eb915ed38e1f0c1332abced2a6dec66cc4cbfd025de9609712582872f94eabc67644b4d4f360e" =
-    tx.proof |> misc.to_hex()
+    tx.proof
+    |> bit_array.base16_encode()
+    |> string.lowercase()
 }
 
 pub fn deserialize_extended_test() {
@@ -220,5 +222,7 @@ pub fn deserialize_extended_test() {
   let assert 100_000 = tx.validity_start_height
   let assert network_id.TestAlbatross = tx.network_id
   let assert "003b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da2900ae6c4c8bc8b3cbf2e96a1845e846bc65e5e9d60d9989746cb14e7f0b195d77ec48eaaf592dc3720ba2d095fa7d15808c168b687cb0092e16f332f313ab45c609" =
-    tx.proof |> misc.to_hex()
+    tx.proof
+    |> bit_array.base16_encode()
+    |> string.lowercase()
 }

@@ -1,14 +1,15 @@
+import gleam/bit_array
 import gleam/bytes_tree.{type BytesTree}
 import gleam/int
 import gleam/option.{type Option, None, Some}
 import gleam/pair
 import gleam/result
+import gleam/string
 import nimiq/address.{type Address}
 import nimiq/coin.{type Coin}
 import nimiq/key/ed25519/public_key.{type PublicKey as Ed25519PublicKey}
 import nimiq/serde
 import nimiq/transaction/signature_proof.{type SignatureProof}
-import nimiq/utils/misc
 
 pub type Blake2bHash =
   BitArray
@@ -398,7 +399,7 @@ pub fn serialize_to_bits(data: IncomingStakingData) -> BitArray {
 }
 
 pub fn to_hex(data: IncomingStakingData) -> String {
-  data |> serialize_to_bits() |> misc.to_hex()
+  data |> serialize_to_bits() |> bit_array.base16_encode() |> string.lowercase()
 }
 
 pub type OutgoingStakingData {

@@ -17,7 +17,6 @@ import nimiq/transaction/network_id
 import nimiq/transaction/signature_proof
 import nimiq/transaction/transaction
 import nimiq/transaction/transaction_builder
-import nimiq/utils/misc
 import snag
 
 fn fee_flag() -> glint.Flag(Int) {
@@ -82,7 +81,7 @@ pub fn run() -> glint.Command(Nil) {
     validity_start_height(named) |> int.parse()
   let assert Ok(network_id) =
     network_id(flags)
-    |> result.map(fn(num) { network_id.from_int(num) |> misc.unwrap() })
+    |> result.map(fn(num) { network_id.from_int(num) |> unwrap() })
 
   // Business logic of the command
   let tx =
@@ -121,6 +120,13 @@ pub fn run() -> glint.Command(Nil) {
     }
   }
   |> transaction.to_hex()
-  |> misc.unwrap()
+  |> unwrap()
   |> io.println
+}
+
+fn unwrap(res: Result(a, _)) -> a {
+  case res {
+    Ok(a) -> a
+    Error(_) -> panic as "Called unwrap on an Error value"
+  }
 }

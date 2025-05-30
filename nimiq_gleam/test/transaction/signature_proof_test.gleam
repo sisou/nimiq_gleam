@@ -1,6 +1,7 @@
 import gleam/bit_array
 import gleam/option.{None, Some}
 import gleam/result
+import gleam/string
 import gleeunit/should
 import nimiq/address
 import nimiq/coin.{Coin}
@@ -13,7 +14,6 @@ import nimiq/transaction/network_id
 import nimiq/transaction/signature_proof.{WebauthnFields}
 import nimiq/transaction/transaction
 import nimiq/transaction/transaction_builder
-import nimiq/utils/misc
 
 pub fn basic_signature_proof_test() {
   // Transaction data is from my explanation of Nimiq's transaction serialization at
@@ -58,7 +58,8 @@ pub fn basic_signature_proof_test() {
       EdDsaSignature(signature),
     )
     |> signature_proof.serialize_to_bits()
-    |> misc.to_hex()
+    |> bit_array.base16_encode()
+    |> string.lowercase()
 }
 
 pub fn regualar_webauthn_signature_proof_test() {
