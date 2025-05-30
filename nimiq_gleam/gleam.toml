@@ -15,6 +15,7 @@ nimiq_serde = { path = "../nimiq_serde" }
 ged25519 = ">= 1.0.0 and < 2.0.0"
 nimiq_bls = { path = "../nimiq_bls" }
 nimiq_blake2b = { path = "../nimiq_blake2b" }
+nimiq_address = { path = "../nimiq_address" }
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"

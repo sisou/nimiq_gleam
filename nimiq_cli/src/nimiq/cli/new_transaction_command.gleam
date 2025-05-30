@@ -6,7 +6,7 @@ import gleam/result
 import gleam/string
 import glint
 import glint/constraint
-import nimiq/account/address
+import nimiq/address
 import nimiq/coin.{Coin}
 import nimiq/key/ed25519/private_key as ed25519_private_key
 import nimiq/key/ed25519/public_key as ed25519_public_key

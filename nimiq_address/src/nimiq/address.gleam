@@ -5,8 +5,7 @@ import gleam/int
 import gleam/list
 import gleam/result
 import gleam/string
-import nimiq/utils/base32
-import nimiq/utils/misc
+import nimiq/base32
 
 const size = 20
 
@@ -115,7 +114,10 @@ pub fn serialize_to_bits(address: Address) -> BitArray {
 }
 
 pub fn to_hex(address: Address) -> String {
-  address |> serialize_to_bits() |> misc.to_hex()
+  address
+  |> serialize_to_bits()
+  |> bit_array.base16_encode()
+  |> string.lowercase()
 }
 
 pub fn to_base64(address: Address) -> String {
@@ -161,7 +163,7 @@ fn iban_check(str: String) -> Int {
     |> int.to_float()
     |> float.divide(6.0)
     // float.divide returns an Error only when dividing by 0, which we don't do here
-    |> misc.unwrap()
+    |> unwrap()
     |> float.ceiling()
     // Convert back to int
     |> float.round()
@@ -175,13 +177,20 @@ fn iban_check(str: String) -> Int {
       { tmp <> string.slice(num, i * 6, 6) }
       |> int.parse()
       // We know that the string is only numbers, so parsing cannot fail
-      |> misc.unwrap()
+      |> unwrap()
       |> int.modulo(97)
       // int.modulo returns an Error only when dividing by 0, which we don't do here
-      |> misc.unwrap()
+      |> unwrap()
       |> int.to_string()
     })
 
   // We know that the string is only numbers, so parsing cannot fail
-  int.parse(tmp) |> misc.unwrap()
+  int.parse(tmp) |> unwrap()
+}
+
+fn unwrap(res: Result(a, _)) -> a {
+  case res {
+    Ok(a) -> a
+    Error(_) -> panic as "Called unwrap on an Error value"
+  }
 }

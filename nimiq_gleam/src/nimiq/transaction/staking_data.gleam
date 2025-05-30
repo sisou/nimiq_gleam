@@ -3,7 +3,7 @@ import gleam/int
 import gleam/option.{type Option, None, Some}
 import gleam/pair
 import gleam/result
-import nimiq/account/address.{type Address}
+import nimiq/address.{type Address}
 import nimiq/coin.{type Coin}
 import nimiq/key/ed25519/public_key.{type PublicKey as Ed25519PublicKey}
 import nimiq/serde

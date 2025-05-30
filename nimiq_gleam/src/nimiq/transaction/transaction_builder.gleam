@@ -1,6 +1,6 @@
 import gleam/option.{type Option, None, Some}
 import nimiq/account/account_type
-import nimiq/account/address.{type Address}
+import nimiq/address.{type Address}
 import nimiq/coin.{type Coin, Coin}
 import nimiq/key/ed25519/public_key as ed25519_public_key
 import nimiq/policy

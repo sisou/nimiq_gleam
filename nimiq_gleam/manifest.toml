@@ -9,6 +9,7 @@ packages = [
   { name = "gleam_stdlib", version = "0.60.0", build_tools = ["gleam"], requirements = [], otp_app = "gleam_stdlib", source = "hex", outer_checksum = "621D600BB134BC239CB2537630899817B1A42E60A1D46C5E9F3FAE39F88C800B" },
   { name = "gleeunit", version = "1.3.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleeunit", source = "hex", outer_checksum = "A7DD6C07B7DA49A6E28796058AA89E651D233B357D5607006D70619CD89DAAAB" },
   { name = "gvarint", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_stdlib", "varint"], otp_app = "gvarint", source = "hex", outer_checksum = "0E30F9E3776BE7B6025622D2C5B4C3108FF7C1B2F8A58F5EFCC592E16FF0357A" },
+  { name = "nimiq_address", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], source = "local", path = "../nimiq_address" },
   { name = "nimiq_blake2b", version = "1.0.0", build_tools = ["gleam"], requirements = ["gblake2", "gleam_stdlib"], source = "local", path = "../nimiq_blake2b" },
   { name = "nimiq_bls", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], source = "local", path = "../nimiq_bls" },
   { name = "nimiq_serde", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib", "gvarint"], source = "local", path = "../nimiq_serde" },
@@ -19,6 +20,7 @@ packages = [
 ged25519 = { version = ">= 1.0.0 and < 2.0.0" }
 gleam_stdlib = { version = ">= 0.34.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
+nimiq_address = { path = "../nimiq_address" }
 nimiq_blake2b = { path = "../nimiq_blake2b" }
 nimiq_bls = { path = "../nimiq_bls" }
 nimiq_serde = { path = "../nimiq_serde" }

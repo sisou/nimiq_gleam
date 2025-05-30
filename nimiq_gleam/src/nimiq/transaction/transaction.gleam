@@ -4,7 +4,7 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import nimiq/account/account_type.{type AccountType}
-import nimiq/account/address.{type Address}
+import nimiq/address.{type Address}
 import nimiq/coin.{type Coin, Coin}
 import nimiq/key/public_key
 import nimiq/key/signature

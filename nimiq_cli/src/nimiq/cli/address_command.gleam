@@ -1,7 +1,7 @@
 import gleam/io
 import glint
 import glint/constraint
-import nimiq/account/address
+import nimiq/address
 
 fn format_flag() -> glint.Flag(String) {
   glint.string_flag("format")

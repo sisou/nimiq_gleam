@@ -1,6 +1,6 @@
 import gleam/bit_array
 import gleam/bytes_tree.{type BytesTree}
-import nimiq/account/address.{type Address}
+import nimiq/address.{type Address}
 import nimiq/blake2b
 import nimiq/key/ed25519/public_key as ed25519_public_key
 import nimiq/transaction/signature_proof_algorithm.{type SignatureProofAlgorithm}

@@ -2,7 +2,7 @@ import gleam/bit_array
 import gleam/option.{None, Some}
 import gleam/result
 import gleeunit/should
-import nimiq/account/address
+import nimiq/address
 import nimiq/coin.{Coin}
 import nimiq/key/ed25519/private_key as ed25519_private_key
 import nimiq/key/ed25519/public_key as ed25519_public_key

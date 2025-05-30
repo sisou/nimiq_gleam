@@ -1,7 +1,7 @@
 import gleam/bit_array
 import gleam/option.{Some}
 import gleeunit/should
-import nimiq/account/address.{type Address}
+import nimiq/address.{type Address}
 import nimiq/bls/compressed_signature
 import nimiq/bls/secret_key
 import nimiq/coin.{Coin}

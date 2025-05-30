@@ -3,7 +3,7 @@ import gleam/option.{None}
 import gleam/result
 import gleeunit/should
 import nimiq/account/account_type
-import nimiq/account/address
+import nimiq/address
 import nimiq/coin.{Coin}
 import nimiq/key/ed25519/public_key as ed25519_public_key
 import nimiq/key/ed25519/signature as ed25519_signature
