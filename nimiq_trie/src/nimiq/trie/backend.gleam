@@ -4,27 +4,23 @@ import gleam/list
 import gleam/order
 import gleam/result
 import gleam/string
+import nimiq/trie/key_nibbles.{type KeyNibbles}
 
-import base_x_gleam
 import radish
 import radish/client as radish_client
 
 pub type Store {
-  Memory(dict: Dict(BitArray, BitArray))
-  Redis(
-    client: radish_client.Client,
-    encode: fn(BitArray) -> String,
-    decode: fn(String) -> Result(BitArray, Nil),
-  )
+  Memory(dict: Dict(String, BitArray))
+  Redis(client: radish_client.Client)
 }
 
 pub type Backend {
   Backend(
     store: Store,
-    get: fn(Backend, BitArray) -> Result(BitArray, Nil),
-    set: fn(Backend, BitArray, BitArray) -> Backend,
-    delete: fn(Backend, BitArray) -> Backend,
-    keys: fn(Backend, BitArray, BitArray) -> List(BitArray),
+    get: fn(Backend, KeyNibbles) -> Result(BitArray, Nil),
+    set: fn(Backend, KeyNibbles, BitArray) -> Backend,
+    del: fn(Backend, KeyNibbles) -> Backend,
+    keys: fn(Backend, KeyNibbles, KeyNibbles) -> List(KeyNibbles),
   )
 }
 
@@ -33,33 +29,44 @@ pub fn memory() -> Backend {
     store: Memory(dict: dict.new()),
     get: fn(backend, key) {
       let assert Memory(dict:) = backend.store
-      dict |> dict.get(key)
+      dict |> dict.get(key |> key_nibbles.to_string())
     },
     set: fn(backend, key, value) {
       let assert Memory(dict:) = backend.store
-      let dict = dict |> dict.insert(key, value)
+      let dict = dict |> dict.insert(key |> key_nibbles.to_string(), value)
       Backend(..backend, store: Memory(dict:))
     },
-    delete: fn(backend, key) {
+    del: fn(backend, key) {
       let assert Memory(dict:) = backend.store
-      let dict = dict |> dict.delete(key)
+      let dict = dict |> dict.delete(key |> key_nibbles.to_string())
       Backend(..backend, store: Memory(dict:))
     },
     keys: fn(backend, start_key, end_key) {
+      let start_key = start_key |> key_nibbles.to_string()
+      let end_key = end_key |> key_nibbles.to_string()
+
+      let key_length = start_key |> string.length()
+      let assert True = key_length == end_key |> string.length()
+
       let assert Memory(dict:) = backend.store
       dict
       |> dict.keys()
       |> list.filter(fn(key) {
-        {
-          { key |> bit_array.compare(start_key) == order.Gt }
-          || { key |> bit_array.compare(start_key) == order.Eq }
+        key |> string.length() == key_length
+        && {
+          { key |> string.compare(start_key) == order.Gt }
+          || { key |> string.compare(start_key) == order.Eq }
         }
         && {
-          { key |> bit_array.compare(end_key) == order.Lt }
-          || { key |> bit_array.compare(end_key) == order.Eq }
+          { key |> string.compare(end_key) == order.Lt }
+          || { key |> string.compare(end_key) == order.Eq }
         }
       })
-      |> list.sort(bit_array.compare)
+      |> list.sort(string.compare)
+      |> list.map(fn(str) {
+        let assert Ok(key) = key_nibbles.from_str(str)
+        key
+      })
     },
   )
 }
@@ -89,41 +96,41 @@ pub fn redis(
 
   let assert Ok(client) = radish.start(host, port, options)
 
-  // Use a costom base64 encoding that preserves bit order
-  // https://github.com/dominictarr/d64
-  let d64_alphabet =
-    ".0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz"
-  // Will return an error if the alphabet contains duplicates
-  let assert Ok(#(encode, decode)) = base_x_gleam.generate(d64_alphabet)
-
   Backend(
-    store: Redis(client:, encode:, decode:),
+    store: Redis(client:),
     get: fn(backend, key) {
-      let assert Redis(client:, encode:, decode:) = backend.store
+      let assert Redis(client:) = backend.store
       client
-      |> radish.get(key |> encode(), timeout)
+      |> radish.get(key |> key_nibbles.to_string(), timeout)
       |> result.replace_error(Nil)
-      |> result.map(decode)
+      |> result.map(bit_array.base64_decode)
       |> result.flatten()
     },
     set: fn(backend, key, value) {
-      let assert Redis(client:, encode:, ..) = backend.store
+      let assert Redis(client:) = backend.store
       let assert Ok(_) =
         client
-        |> radish.set(key |> encode(), value |> encode(), timeout)
+        |> radish.set(
+          key |> key_nibbles.to_string(),
+          value |> bit_array.base64_encode(False),
+          timeout,
+        )
       backend
     },
-    delete: fn(backend, key) {
-      let assert Redis(client:, encode:, ..) = backend.store
+    del: fn(backend, key) {
+      let assert Redis(client:) = backend.store
       let assert Ok(_) =
         client
-        |> radish.del([key |> encode()], timeout)
+        |> radish.del([key |> key_nibbles.to_string()], timeout)
       backend
     },
     keys: fn(backend, start_key, end_key) {
-      let assert Redis(client:, encode:, decode:) = backend.store
-      let start_key = start_key |> encode()
-      let end_key = end_key |> encode()
+      let assert Redis(client:) = backend.store
+      let start_key = start_key |> key_nibbles.to_string()
+      let end_key = end_key |> key_nibbles.to_string()
+
+      let key_length = start_key |> string.length()
+      let assert True = key_length == end_key |> string.length()
 
       let common_prefix =
         string_common_prefix(start_key, end_key) |> result.unwrap("*")
@@ -132,7 +139,8 @@ pub fn redis(
 
       keys
       |> list.filter(fn(key) {
-        {
+        key |> string.length() == key_length
+        && {
           { key |> string.compare(start_key) == order.Gt }
           || { key |> string.compare(start_key) == order.Eq }
         }
@@ -142,9 +150,9 @@ pub fn redis(
         }
       })
       |> list.sort(string.compare)
-      |> list.map(fn(key) {
-        let assert Ok(bytes) = decode(key)
-        bytes
+      |> list.map(fn(str) {
+        let assert Ok(key) = key_nibbles.from_str(str)
+        key
       })
     },
   )

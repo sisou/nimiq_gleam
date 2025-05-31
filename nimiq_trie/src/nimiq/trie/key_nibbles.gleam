@@ -58,7 +58,7 @@ pub fn get(key: KeyNibbles, index: Int) -> Option(Int) {
 
 pub fn from_str(hex: String) -> Result(KeyNibbles, String) {
   case hex {
-    "ε" -> Ok(root())
+    "ROOT" -> Ok(root())
     _ -> {
       hex
       |> string.to_graphemes()
@@ -72,7 +72,7 @@ pub fn from_str(hex: String) -> Result(KeyNibbles, String) {
 
 pub fn to_string(key: KeyNibbles) -> String {
   case len(key) {
-    0 -> "ε"
+    0 -> "ROOT"
     _ ->
       key.nibbles
       |> iv.fold("", fn(acc, nibble) { acc <> int.to_base16(nibble) })

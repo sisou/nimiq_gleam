@@ -61,8 +61,7 @@ pub fn init(
     let #(key, value) = pair
     trie |> put_raw(key, value)
   })
-
-  trie |> update_root()
+  |> update_root()
 }
 
 /// Prints a human friendly version of the subtrie for debugging.
@@ -211,7 +210,7 @@ fn count_nodes_while(
 
 fn get_node(trie: MerkleRadixTrie(data), key: KeyNibbles) -> Option(TrieNode) {
   trie.table
-  |> trie.table.get(key |> key_nibbles.serialize_to_vec())
+  |> trie.table.get(key)
   |> result.replace_error(
     "Node not found for key " <> key |> key_nibbles.to_string(),
   )
@@ -227,10 +226,7 @@ fn put_node(
 ) -> MerkleRadixTrie(data) {
   let table =
     trie.table
-    |> trie.table.set(
-      node.key |> key_nibbles.serialize_to_vec(),
-      node |> node.serialize_to_vec(),
-    )
+    |> trie.table.set(node.key, node |> node.serialize_to_vec())
   MerkleRadixTrie(..trie, table:)
 }
 
@@ -238,8 +234,7 @@ fn remove_node(
   trie: MerkleRadixTrie(data),
   key: KeyNibbles,
 ) -> MerkleRadixTrie(data) {
-  let table =
-    trie.table |> trie.table.delete(key |> key_nibbles.serialize_to_vec())
+  let table = trie.table |> trie.table.del(key)
   MerkleRadixTrie(..trie, table:)
 }
 
@@ -857,9 +852,6 @@ pub fn iter_nodes(
     start_key |> key_nibbles.len() == end_key |> key_nibbles.len()
     as "Start and end keys should have the same length"
 
-  let start_key = start_key |> key_nibbles.serialize_to_vec()
-  let end_key = end_key |> key_nibbles.serialize_to_vec()
-
   let keys =
     trie.table
     |> trie.table.keys(start_key, end_key)
@@ -868,7 +860,6 @@ pub fn iter_nodes(
     case acc {
       [] -> yielder.Done
       [key, ..rest] -> {
-        let assert Ok(key) = key_nibbles.deserialize_all(key)
         let assert Some(node) = trie |> get_node(key)
         let assert Some(value) = node.value
         let value = value |> trie.deserializer()

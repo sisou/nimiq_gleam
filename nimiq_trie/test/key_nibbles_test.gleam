@@ -11,10 +11,10 @@ pub fn to_from_str_test() {
     "cfb98637bcae43c13323eaa1731ced2b716962fd",
   )
   let assert Ok(key) = key_nibbles.from_str("")
-  should.equal(key |> key_nibbles.to_string(), "ε")
+  should.equal(key |> key_nibbles.to_string(), "ROOT")
 
-  let assert Ok(key) = key_nibbles.from_str("ε")
-  should.equal(key |> key_nibbles.to_string(), "ε")
+  let assert Ok(key) = key_nibbles.from_str("ROOT")
+  should.equal(key |> key_nibbles.to_string(), "ROOT")
 
   let assert Ok(key) = key_nibbles.from_str("1")
   should.equal(key |> key_nibbles.to_string(), "1")
@@ -69,8 +69,14 @@ pub fn nibbles_slice_test() {
     key |> key_nibbles.slice(1, 40) |> key_nibbles.to_string(),
     "fb98637bcae43c13323eaa1731ced2b716962fd",
   )
-  should.equal(key |> key_nibbles.slice(2, 1) |> key_nibbles.to_string(), "ε")
-  should.equal(key |> key_nibbles.slice(42, 43) |> key_nibbles.to_string(), "ε")
+  should.equal(
+    key |> key_nibbles.slice(2, 1) |> key_nibbles.to_string(),
+    "ROOT",
+  )
+  should.equal(
+    key |> key_nibbles.slice(42, 43) |> key_nibbles.to_string(),
+    "ROOT",
+  )
 }
 
 pub fn nibbles_suffix_test() {
@@ -89,8 +95,8 @@ pub fn nibbles_suffix_test() {
     key |> key_nibbles.suffix(2) |> key_nibbles.to_string(),
     "b98637bcae43c13323eaa1731ced2b716962fd",
   )
-  should.equal(key |> key_nibbles.suffix(40) |> key_nibbles.to_string(), "ε")
-  should.equal(key |> key_nibbles.suffix(42) |> key_nibbles.to_string(), "ε")
+  should.equal(key |> key_nibbles.suffix(40) |> key_nibbles.to_string(), "ROOT")
+  should.equal(key |> key_nibbles.suffix(42) |> key_nibbles.to_string(), "ROOT")
 }
 
 pub fn nibbles_is_prefix_of_test() {
