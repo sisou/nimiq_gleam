@@ -8,7 +8,7 @@
 ///
 /// Per the specification, any `output_size` between 1 and 64 bytes is supported.
 @external(erlang, "Elixir.Blake2", "hash2b")
-pub fn hash2b(m: BitArray, output_size: Int) -> BitArray
+pub fn hash2b(message m: BitArray, output_size output_size: Int) -> BitArray
 
 /// Blake2b hashing
 ///
@@ -21,9 +21,9 @@ pub fn hash2b(m: BitArray, output_size: Int) -> BitArray
 /// Per the specification, any `output_size` between 1 and 64 bytes is supported.
 @external(erlang, "Elixir.Blake2", "hash2b")
 pub fn hash2b_secret(
-  m: BitArray,
-  output_size: Int,
-  secret_key: BitArray,
+  message m: BitArray,
+  output_size output_size: Int,
+  secret_key secret_key: BitArray,
 ) -> BitArray
 
 /// Blake2s hashing
@@ -36,7 +36,7 @@ pub fn hash2b_secret(
 ///
 /// Per the specification, any output_size between 1 and 32 bytes is supported.
 @external(erlang, "Elixir.Blake2", "hash2s")
-pub fn hash2s(m: BitArray, output_size: Int) -> BitArray
+pub fn hash2s(message m: BitArray, output_size output_size: Int) -> BitArray
 
 /// Blake2s hashing
 ///
@@ -49,7 +49,7 @@ pub fn hash2s(m: BitArray, output_size: Int) -> BitArray
 /// Per the specification, any output_size between 1 and 32 bytes is supported.
 @external(erlang, "Elixir.Blake2", "hash2s")
 pub fn hash2s_secret(
-  m: BitArray,
-  output_size: Int,
-  secret_key: BitArray,
+  message m: BitArray,
+  output_size output_size: Int,
+  secret_key secret_key: BitArray,
 ) -> BitArray

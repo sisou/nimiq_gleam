@@ -1,7 +1,7 @@
 name = "gvarint"
-version = "1.0.1"
+version = "1.0.2"
 
-description = "Gleam bindings for the Elixir `varint` package."
+description = "A library to compress unsigned integers using LEB128 - Gleam bindings for the Elixir `varint` package."
 licences = ["Apache-2.0"]
 repository = { type = "github", user = "sisou", repo = "nimiq_gleam" }
 

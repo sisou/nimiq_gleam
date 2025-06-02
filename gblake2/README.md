@@ -3,7 +3,12 @@
 [![Package Version](https://img.shields.io/hexpm/v/gblake2)](https://hex.pm/packages/gblake2)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/gblake2/)
 
-Gleam bindings for the Elixir [`blake2`](https://hex.pm/packages/blake2) package.
+BLAKE2 hash functions - Gleam bindings for the Elixir [`blake2`](https://hex.pm/packages/blake2) package.
+
+Implementing "Blake2b" and "Blake2s" as described in [RFC7693](https://tools.ietf.org/html/rfc7693)
+
+Note that, at present, this only supports full message hashing and no OPTIONAL features of BLAKE2.
+
 
 ```sh
 gleam add gblake2@1

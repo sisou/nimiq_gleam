@@ -1,7 +1,7 @@
 name = "gblake2"
-version = "1.0.0"
+version = "1.0.1"
 
-description = "Gleam bindings for the Elixir `blake2` package."
+description = "BLAKE2 hash functions - Gleam bindings for the Elixir `blake2` package."
 licences = ["Apache-2.0"]
 repository = { type = "github", user = "sisou", repo = "nimiq_gleam" }
 

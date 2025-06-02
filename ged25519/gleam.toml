@@ -1,7 +1,7 @@
 name = "ged25519"
-version = "1.0.0"
+version = "1.0.1"
 
-description = "Gleam bindings for the Elixir `ed25519` package."
+description = "Ed25519 signature functions - Gleam bindings for the Elixir `ed25519` package."
 licences = ["Apache-2.0"]
 repository = { type = "github", user = "sisou", repo = "nimiq_gleam" }
 

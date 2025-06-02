@@ -3,7 +3,7 @@
 [![Package Version](https://img.shields.io/hexpm/v/gvarint)](https://hex.pm/packages/gvarint)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/gvarint/)
 
-Gleam bindings for the Elixir [`varint`](https://hex.pm/packages/varint) package.
+A library to compress unsigned integers using [LEB128](https://en.wikipedia.org/wiki/LEB128) - Gleam bindings for the Elixir [`varint`](https://hex.pm/packages/varint) package.
 
 ```sh
 gleam add gvarint@1
