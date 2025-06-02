@@ -21,7 +21,7 @@ pub fn main() -> Nil {
 
   // Create a signature over a message
   let message = bit_array.from_string("Gleam rocks!")
-  let signature = ged25519.signature(message, private, public_key)
+  let signature = ged25519.signature(message, secret_key, public_key)
 
   // Verify a signature
   assert ged25519.valid_signature(signature, message, public_key) == True
