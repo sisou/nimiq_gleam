@@ -22,9 +22,9 @@ pub fn generate_key_pair() -> #(Key, Key)
 @external(erlang, "Elixir.Ed25519.Ed25519", "generate_key_pair")
 pub fn derive_key_pair(secret_key secret: Key) -> #(Key, Key)
 
-/// Returns whether a given `key` lies on the ed25519 curve.
+/// Returns whether a given public key lies on the ed25519 curve.
 @external(erlang, "Elixir.Ed25519", "on_curve?")
-pub fn on_curve(key key: Key) -> Bool
+pub fn on_curve(public_key key: Key) -> Bool
 
 /// Sign a message
 @external(erlang, "Elixir.Ed25519", "signature")

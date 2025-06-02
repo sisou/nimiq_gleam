@@ -1,5 +1,5 @@
 name = "ged25519"
-version = "1.0.1"
+version = "1.0.2"
 
 description = "Ed25519 signature functions - Gleam bindings for the Elixir `ed25519` package."
 licences = ["Apache-2.0"]
