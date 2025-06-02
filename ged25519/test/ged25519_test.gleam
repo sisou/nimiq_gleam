@@ -23,6 +23,7 @@ pub fn generate_key_pair_test() {
   assert derived_public_key == public_key
 
   assert ged25519.on_curve(secret_key) == True
+  assert ged25519.on_curve(public_key) == True
 }
 
 pub fn signature_test() {
