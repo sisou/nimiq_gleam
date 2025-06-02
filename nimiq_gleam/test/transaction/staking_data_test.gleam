@@ -2,7 +2,6 @@ import gleam/bit_array
 import gleam/option.{None, Some}
 import gleam/result
 import gleam/string
-import gleeunit/should
 import nimiq/address
 import nimiq/key/ed25519/private_key as ed25519_private_key
 import nimiq/key/ed25519/public_key as ed25519_public_key
@@ -61,12 +60,12 @@ pub fn create_validator_serialization_test() {
     proof,
   )) = staking_data.deserialize_all(serialized)
 
-  should.equal(signing_key, public_key)
-  should.equal(voting_key, bls_compressed_public_key)
-  should.equal(reward_address, address)
-  should.equal(signal_data, Some(data))
-  should.equal(proof_of_knowledge, bls_proof_of_knowledge)
-  should.equal(proof, signature_proof)
+  assert signing_key == public_key
+  assert voting_key == bls_compressed_public_key
+  assert reward_address == address
+  assert signal_data == Some(data)
+  assert proof_of_knowledge == bls_proof_of_knowledge
+  assert proof == signature_proof
 }
 
 pub fn update_validator_serialization_test() {
@@ -108,12 +107,12 @@ pub fn update_validator_serialization_test() {
     proof,
   )) = staking_data.deserialize_all(serialized)
 
-  should.equal(new_signing_key, Some(public_key))
-  should.equal(new_voting_key, None)
-  should.equal(new_reward_address, Some(address))
-  should.equal(new_signal_data, None)
-  should.equal(new_proof_of_knowledge, None)
-  should.equal(proof, signature_proof)
+  assert new_signing_key == Some(public_key)
+  assert new_voting_key == None
+  assert new_reward_address == Some(address)
+  assert new_signal_data == None
+  assert new_proof_of_knowledge == None
+  assert proof == signature_proof
 }
 
 pub fn deactivate_validator_serialization_test() {
@@ -137,8 +136,8 @@ pub fn deactivate_validator_serialization_test() {
   let assert Ok(staking_data.DeactivateValidator(validator_address, proof)) =
     staking_data.deserialize_all(serialized)
 
-  should.equal(validator_address, address)
-  should.equal(proof, signature_proof)
+  assert validator_address == address
+  assert proof == signature_proof
 }
 
 pub fn reactivate_validator_serialization_test() {
@@ -162,8 +161,8 @@ pub fn reactivate_validator_serialization_test() {
   let assert Ok(staking_data.ReactivateValidator(validator_address, proof)) =
     staking_data.deserialize_all(serialized)
 
-  should.equal(validator_address, address)
-  should.equal(proof, signature_proof)
+  assert validator_address == address
+  assert proof == signature_proof
 }
 
 pub fn retire_validator_serialization_test() {
@@ -185,7 +184,7 @@ pub fn retire_validator_serialization_test() {
   let assert Ok(staking_data.RetireValidator(proof)) =
     staking_data.deserialize_all(serialized)
 
-  should.equal(proof, signature_proof)
+  assert proof == signature_proof
 }
 
 pub fn create_staker_serialization_test() {
@@ -209,8 +208,8 @@ pub fn create_staker_serialization_test() {
   let assert Ok(staking_data.CreateStaker(delegation, proof)) =
     staking_data.deserialize_all(serialized)
 
-  should.equal(delegation, Some(address))
-  should.equal(proof, signature_proof)
+  assert delegation == Some(address)
+  assert proof == signature_proof
 }
 
 pub fn add_stake_serialization_test() {
@@ -229,7 +228,7 @@ pub fn add_stake_serialization_test() {
   let assert Ok(staking_data.AddStake(staker_address)) =
     staking_data.deserialize_all(serialized)
 
-  should.equal(staker_address, address)
+  assert staker_address == address
 }
 
 pub fn update_staker_serialization_test() {
@@ -254,9 +253,9 @@ pub fn update_staker_serialization_test() {
     proof,
   )) = staking_data.deserialize_all(serialized)
 
-  should.equal(new_delegation, None)
-  should.equal(reactivate_all_stake, False)
-  should.equal(proof, signature_proof)
+  assert new_delegation == None
+  assert reactivate_all_stake == False
+  assert proof == signature_proof
 }
 // pub fn set_active_stake_serialization_test() {
 //   todo

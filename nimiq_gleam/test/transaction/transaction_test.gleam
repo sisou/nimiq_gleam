@@ -2,7 +2,6 @@ import gleam/bit_array
 import gleam/option.{None}
 import gleam/result
 import gleam/string
-import gleeunit/should
 import nimiq/account/account_type
 import nimiq/address
 import nimiq/coin.{Coin}
@@ -39,13 +38,13 @@ pub fn serialize_basic_test() {
       None,
     )
 
-  transaction.serialize_content(tx)
-  |> should.equal(<<
-    0, 0, 104, 157, 174, 47, 119, 176, 72, 220, 192, 142, 20, 215, 49, 4, 234,
-    20, 34, 43, 91, 225, 0, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
-    17, 17, 17, 17, 17, 17, 17, 0, 0, 0, 0, 0, 5, 245, 225, 0, 0, 0, 0, 0, 0, 0,
-    0, 138, 0, 1, 134, 160, 5, 0, 0,
-  >>)
+  assert transaction.serialize_content(tx)
+    == <<
+      0, 0, 104, 157, 174, 47, 119, 176, 72, 220, 192, 142, 20, 215, 49, 4, 234,
+      20, 34, 43, 91, 225, 0, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
+      17, 17, 17, 17, 17, 17, 17, 0, 0, 0, 0, 0, 5, 245, 225, 0, 0, 0, 0, 0, 0,
+      0, 0, 138, 0, 1, 134, 160, 5, 0, 0,
+    >>
 
   // Construct signature proof
   let assert Ok(public_key) =
@@ -68,9 +67,8 @@ pub fn serialize_basic_test() {
 
   let tx = transaction.set_signature_proof(tx, proof)
 
-  transaction.serialize_to_bits(tx)
-  |> should.equal(
-    Ok(<<
+  assert transaction.serialize_to_bits(tx)
+    == Ok(<<
       0, 0, 59, 106, 39, 188, 206, 182, 164, 45, 98, 163, 168, 208, 42, 111, 13,
       115, 101, 50, 21, 119, 29, 226, 67, 166, 58, 192, 72, 161, 139, 89, 218,
       41, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
@@ -80,8 +78,7 @@ pub fn serialize_basic_test() {
       225, 240, 193, 51, 42, 188, 237, 42, 109, 236, 102, 204, 76, 191, 208, 37,
       222, 150, 9, 113, 37, 130, 135, 47, 148, 234, 188, 103, 100, 75, 77, 79,
       54, 14,
-    >>),
-  )
+    >>)
 }
 
 pub fn serialize_extended_test() {
@@ -109,14 +106,14 @@ pub fn serialize_extended_test() {
       None,
     )
 
-  transaction.serialize_content(tx)
-  |> should.equal(<<
-    0, 12, 78, 105, 109, 105, 113, 32, 114, 111, 99, 107, 115, 33, 104, 157, 174,
-    47, 119, 176, 72, 220, 192, 142, 20, 215, 49, 4, 234, 20, 34, 43, 91, 225, 0,
-    17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
-    17, 0, 0, 0, 0, 0, 5, 245, 225, 0, 0, 0, 0, 0, 0, 0, 0, 138, 0, 1, 134, 160,
-    5, 0, 0,
-  >>)
+  assert transaction.serialize_content(tx)
+    == <<
+      0, 12, 78, 105, 109, 105, 113, 32, 114, 111, 99, 107, 115, 33, 104, 157,
+      174, 47, 119, 176, 72, 220, 192, 142, 20, 215, 49, 4, 234, 20, 34, 43, 91,
+      225, 0, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
+      17, 17, 17, 0, 0, 0, 0, 0, 5, 245, 225, 0, 0, 0, 0, 0, 0, 0, 0, 138, 0, 1,
+      134, 160, 5, 0, 0,
+    >>
 
   // Construct signature proof
   let assert Ok(public_key) =
@@ -139,9 +136,8 @@ pub fn serialize_extended_test() {
 
   let tx = transaction.set_signature_proof(tx, proof)
 
-  transaction.serialize_to_bits(tx)
-  |> should.equal(
-    Ok(<<
+  assert transaction.serialize_to_bits(tx)
+    == Ok(<<
       1, 104, 157, 174, 47, 119, 176, 72, 220, 192, 142, 20, 215, 49, 4, 234, 20,
       34, 43, 91, 225, 0, 0, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
       17, 17, 17, 17, 17, 17, 17, 0, 12, 78, 105, 109, 105, 113, 32, 114, 111,
@@ -153,8 +149,7 @@ pub fn serialize_extended_test() {
       78, 127, 11, 25, 93, 119, 236, 72, 234, 175, 89, 45, 195, 114, 11, 162,
       208, 149, 250, 125, 21, 128, 140, 22, 139, 104, 124, 176, 9, 46, 22, 243,
       50, 243, 19, 171, 69, 198, 9,
-    >>),
-  )
+    >>)
 }
 
 pub fn deserialize_basic_test() {
@@ -174,12 +169,12 @@ pub fn deserialize_basic_test() {
   let assert "NQ17 D2ES UBTP N14D RG4E 2KBK 217A 2GH2 NNY1" =
     tx.sender
     |> address.to_user_friendly_address()
-  should.equal(account_type.Basic, tx.sender_type)
+  assert account_type.Basic == tx.sender_type
   let assert <<>> = tx.sender_data
   let assert "NQ34 248H 248H 248H 248H 248H 248H 248H 248H" =
     tx.recipient
     |> address.to_user_friendly_address()
-  should.equal(account_type.Basic, tx.recipient_type)
+  assert account_type.Basic == tx.recipient_type
   let assert <<>> = tx.recipient_data
   let assert Coin(100_000_000) = tx.value
   let assert Coin(138) = tx.fee
@@ -210,12 +205,12 @@ pub fn deserialize_extended_test() {
   let assert "NQ17 D2ES UBTP N14D RG4E 2KBK 217A 2GH2 NNY1" =
     tx.sender
     |> address.to_user_friendly_address()
-  should.equal(account_type.Basic, tx.sender_type)
+  assert account_type.Basic == tx.sender_type
   let assert <<>> = tx.sender_data
   let assert "NQ34 248H 248H 248H 248H 248H 248H 248H 248H" =
     tx.recipient
     |> address.to_user_friendly_address()
-  should.equal(account_type.Basic, tx.recipient_type)
+  assert account_type.Basic == tx.recipient_type
   let assert Ok("Nimiq rocks!") = tx.recipient_data |> bit_array.to_string()
   let assert Coin(100_000_000) = tx.value
   let assert Coin(138) = tx.fee

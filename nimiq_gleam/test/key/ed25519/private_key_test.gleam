@@ -1,6 +1,5 @@
 import dummy
 import gleam/string
-import gleeunit/should
 import nimiq/key/ed25519/private_key
 
 pub fn generate_private_key_test() {
@@ -15,5 +14,5 @@ pub fn generate_private_key_test() {
 pub fn import_private_key_test() {
   let assert Ok(private) = private_key.from_hex(dummy.private_key_hex)
 
-  private |> private_key.to_hex() |> should.equal(dummy.private_key_hex)
+  assert private |> private_key.to_hex() == dummy.private_key_hex
 }
