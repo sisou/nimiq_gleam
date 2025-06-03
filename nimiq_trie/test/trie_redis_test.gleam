@@ -20,7 +20,7 @@ pub fn simple_trie_test() {
 
   let trie =
     trie.new(
-      backend.redis("localhost", 6379, [radish.PoolSize(1)]),
+      backend.redis("localhost", 6379, [radish.PoolSize(1)], "test"),
       account.serialize_to_vec,
       fn(bytes: BitArray) {
         let assert Ok(account) = account.deserialize_all(bytes)
@@ -49,7 +49,7 @@ pub fn get_put_remove_test() {
 
   let trie =
     trie.new(
-      backend.redis("localhost", 6379, [radish.PoolSize(1)]),
+      backend.redis("localhost", 6379, [radish.PoolSize(1)], "test"),
       fn(num: Int) { <<num:32>> },
       fn(bytes: BitArray) {
         case bytes {
@@ -120,7 +120,7 @@ pub fn hybrid_nodes_test() {
 
   let trie =
     trie.new(
-      backend.redis("localhost", 6379, [radish.PoolSize(1)]),
+      backend.redis("localhost", 6379, [radish.PoolSize(1)], "test"),
       fn(num: Int) { <<num:32>> },
       fn(bytes: BitArray) {
         case bytes {
@@ -209,7 +209,7 @@ pub fn can_handle_hybrid_node_with_one_child_test() {
 
   let original =
     trie.new(
-      backend.redis("localhost", 6379, [radish.PoolSize(1)]),
+      backend.redis("localhost", 6379, [radish.PoolSize(1)], "test"),
       fn(num: Int) { <<num:32>> },
       fn(bytes: BitArray) {
         case bytes {
@@ -255,7 +255,7 @@ pub fn can_iterate_over_nodes_test() {
 
   let trie =
     trie.new(
-      backend.redis("localhost", 6379, [radish.PoolSize(1)]),
+      backend.redis("localhost", 6379, [radish.PoolSize(1)], "test"),
       fn(num: Int) { <<num:32>> },
       fn(bytes: BitArray) {
         case bytes {
@@ -291,6 +291,6 @@ pub fn can_iterate_over_nodes_test() {
 }
 
 fn cleanup(trie: trie.MerkleRadixTrie(data)) {
-  let assert backend.Redis(client) = trie.table.store
+  let assert backend.Redis(client:, ..) = trie.table.store
   client |> radish.execute(["FLUSHDB"], 1000)
 }

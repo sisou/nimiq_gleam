@@ -11,7 +11,7 @@ import radish/client as radish_client
 
 pub type Store {
   Memory(dict: Dict(String, BitArray))
-  Redis(client: radish_client.Client)
+  Redis(client: radish_client.Client, prefix: String)
 }
 
 pub type Backend {
@@ -79,9 +79,10 @@ pub type RedisMeta {
 }
 
 pub fn redis(
-  host: String,
-  port: Int,
-  options: List(radish.StartOption),
+  redis_host host: String,
+  redis_port port: Int,
+  radish_options options: List(radish.StartOption),
+  key_prefix prefix: String,
 ) -> Backend {
   // Extract the timeout option if it exists, defaulting to 1000 ms
   let timeout =
@@ -97,35 +98,35 @@ pub fn redis(
   let assert Ok(client) = radish.start(host, port, options)
 
   Backend(
-    store: Redis(client:),
+    store: Redis(client:, prefix:),
     get: fn(backend, key) {
-      let assert Redis(client:) = backend.store
+      let assert Redis(client:, prefix:) = backend.store
       client
-      |> radish.get(key |> key_nibbles.to_string(), timeout)
+      |> radish.get(prefix <> key |> key_nibbles.to_string(), timeout)
       |> result.replace_error(Nil)
       |> result.map(bit_array.base64_decode)
       |> result.flatten()
     },
     set: fn(backend, key, value) {
-      let assert Redis(client:) = backend.store
+      let assert Redis(client:, prefix:) = backend.store
       let assert Ok(_) =
         client
         |> radish.set(
-          key |> key_nibbles.to_string(),
+          prefix <> key |> key_nibbles.to_string(),
           value |> bit_array.base64_encode(False),
           timeout,
         )
       backend
     },
     del: fn(backend, key) {
-      let assert Redis(client:) = backend.store
+      let assert Redis(client:, prefix:) = backend.store
       let assert Ok(_) =
         client
-        |> radish.del([key |> key_nibbles.to_string()], timeout)
+        |> radish.del([prefix <> key |> key_nibbles.to_string()], timeout)
       backend
     },
     keys: fn(backend, start_key, end_key) {
-      let assert Redis(client:) = backend.store
+      let assert Redis(client:, prefix:) = backend.store
       let start_key = start_key |> key_nibbles.to_string()
       let end_key = end_key |> key_nibbles.to_string()
 
@@ -135,9 +136,13 @@ pub fn redis(
       let common_prefix =
         string_common_prefix(start_key, end_key) |> result.unwrap("*")
 
-      let assert Ok(keys) = client |> radish.keys(common_prefix, timeout)
+      let assert Ok(keys) =
+        client |> radish.keys(prefix <> common_prefix, timeout)
+
+      let prefix_length = prefix |> string.length()
 
       keys
+      |> list.map(fn(key) { key |> string.drop_start(prefix_length) })
       |> list.filter(fn(key) {
         key |> string.length() == key_length
         && {
