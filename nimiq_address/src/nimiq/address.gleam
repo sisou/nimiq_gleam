@@ -142,6 +142,20 @@ pub fn to_user_friendly_address(address: Address) -> String {
   |> string.join(" ")
 }
 
+pub fn to_user_friendly_address_ccode(address: Address, ccode: String) -> String {
+  let encoded = base32.encode(address.buf, nimiq_alphabet)
+  let check =
+    { "00" <> int.to_string(98 - iban_check(encoded <> ccode <> "00")) }
+    |> string.slice(-2, 2)
+
+  let address = ccode <> check <> encoded
+
+  // Add spaces between every 4 characters
+  list.range(0, 8)
+  |> list.map(fn(i) { string.slice(address, i * 4, 4) })
+  |> string.join(" ")
+}
+
 fn iban_check(str: String) -> Int {
   let num =
     str

@@ -135,3 +135,11 @@ pub fn zero_test() {
     |> address.to_user_friendly_address()
     == "NQ77 0000 0000 0000 0000 0000 0000 0000 0001"
 }
+
+pub fn custom_ccode_test() {
+  let assert Ok(address) =
+    address.from_hex("64e8e01142a6ccc1265189e95ad72e17586fe4ad")
+  assert address
+    |> address.to_user_friendly_address_ccode("CC")
+    == "CC34 CKLE 04A2 LT6C 29JH H7LM MMRE 2VC6 YR5D"
+}
