@@ -28,7 +28,7 @@ pub fn simple_trie_test() {
       },
     )
 
-  let trie = trie |> trie.put(key_1, account)
+  trie |> trie.put(key_1, account)
 
   let assert Some(hash) = trie |> trie.root_hash() as "complete trie"
   assert hash |> bit_array.base16_encode() |> string.lowercase()
@@ -61,11 +61,11 @@ pub fn get_put_remove_test() {
 
   assert trie |> trie.count_nodes() == #(0, 0, 0)
 
-  let trie = trie |> trie.put(key_1, 80_085)
+  trie |> trie.put(key_1, 80_085)
   assert trie |> trie.count_nodes() == #(0, 0, 1)
-  let trie = trie |> trie.put(key_2, 999)
+  trie |> trie.put(key_2, 999)
   assert trie |> trie.count_nodes() == #(1, 0, 2)
-  let trie = trie |> trie.put(key_3, 1337)
+  trie |> trie.put(key_3, 1337)
 
   assert trie |> trie.count_nodes() == #(2, 0, 3)
   assert trie |> trie.get(key_1) == Some(80_085)
@@ -73,35 +73,35 @@ pub fn get_put_remove_test() {
   assert trie |> trie.get(key_3) == Some(1337)
   assert trie |> trie.get(key_4) == None
 
-  let trie = trie |> trie.remove(key_4)
+  trie |> trie.remove(key_4)
   assert trie |> trie.count_nodes() == #(2, 0, 3)
   assert trie |> trie.get(key_1) == Some(80_085)
   assert trie |> trie.get(key_2) == Some(999)
   assert trie |> trie.get(key_3) == Some(1337)
   assert trie |> trie.get(key_4) == None
 
-  let trie = trie |> trie.remove(key_1)
+  trie |> trie.remove(key_1)
   assert trie |> trie.count_nodes() == #(1, 0, 2)
   assert trie |> trie.get(key_1) == None
   assert trie |> trie.get(key_2) == Some(999)
   assert trie |> trie.get(key_3) == Some(1337)
   assert trie |> trie.get(key_4) == None
 
-  let trie = trie |> trie.remove(key_2)
+  trie |> trie.remove(key_2)
   assert trie |> trie.count_nodes() == #(0, 0, 1)
   assert trie |> trie.get(key_1) == None
   assert trie |> trie.get(key_2) == None
   assert trie |> trie.get(key_3) == Some(1337)
   assert trie |> trie.get(key_4) == None
 
-  let trie = trie |> trie.remove(key_3)
+  trie |> trie.remove(key_3)
   assert trie |> trie.count_nodes() == #(0, 0, 0)
   assert trie |> trie.get(key_1) == None
   assert trie |> trie.get(key_2) == None
   assert trie |> trie.get(key_3) == None
   assert trie |> trie.get(key_4) == None
 
-  let trie = trie |> trie.remove(key_nibbles.root())
+  trie |> trie.remove(key_nibbles.root())
   assert trie |> trie.count_nodes() == #(0, 0, 0)
   assert trie |> trie.get(key_1) == None
   assert trie |> trie.get(key_2) == None
@@ -132,13 +132,13 @@ pub fn hybrid_nodes_test() {
 
   let initial_hash = trie |> trie.root_hash_assert()
   assert trie |> trie.count_nodes() == #(0, 0, 0)
-  let trie = trie |> trie.put(key_1, 80_085)
+  trie |> trie.put(key_1, 80_085)
   assert trie |> trie.count_nodes() == #(0, 0, 1)
-  let trie = trie |> trie.put(key_2, 999)
+  trie |> trie.put(key_2, 999)
   assert trie |> trie.count_nodes() == #(0, 1, 1)
-  let trie = trie |> trie.put(key_3, 1337)
+  trie |> trie.put(key_3, 1337)
   assert trie |> trie.count_nodes() == #(0, 2, 1)
-  let trie = trie |> trie.put(key_4, 6969)
+  trie |> trie.put(key_4, 6969)
 
   assert trie |> trie.count_nodes() == #(0, 2, 2)
   assert trie |> trie.get(key_1) == Some(80_085)
@@ -147,7 +147,7 @@ pub fn hybrid_nodes_test() {
   assert trie |> trie.get(key_4) == Some(6969)
   assert trie |> trie.get(key_5) == None
 
-  let trie = trie |> trie.remove(key_5)
+  trie |> trie.remove(key_5)
   assert trie |> trie.count_nodes() == #(0, 2, 2)
   assert trie |> trie.get(key_1) == Some(80_085)
   assert trie |> trie.get(key_2) == Some(999)
@@ -155,7 +155,7 @@ pub fn hybrid_nodes_test() {
   assert trie |> trie.get(key_4) == Some(6969)
   assert trie |> trie.get(key_5) == None
 
-  let trie = trie |> trie.remove(key_1)
+  trie |> trie.remove(key_1)
   assert trie |> trie.count_nodes() == #(0, 1, 2)
   assert trie |> trie.get(key_1) == None
   assert trie |> trie.get(key_2) == Some(999)
@@ -163,7 +163,7 @@ pub fn hybrid_nodes_test() {
   assert trie |> trie.get(key_4) == Some(6969)
   assert trie |> trie.get(key_5) == None
 
-  let trie = trie |> trie.remove(key_2)
+  trie |> trie.remove(key_2)
   assert trie |> trie.count_nodes() == #(1, 0, 2)
   assert trie |> trie.get(key_1) == None
   assert trie |> trie.get(key_2) == None
@@ -171,7 +171,7 @@ pub fn hybrid_nodes_test() {
   assert trie |> trie.get(key_4) == Some(6969)
   assert trie |> trie.get(key_5) == None
 
-  let trie = trie |> trie.remove(key_3)
+  trie |> trie.remove(key_3)
   assert trie |> trie.count_nodes() == #(0, 0, 1)
   assert trie |> trie.get(key_1) == None
   assert trie |> trie.get(key_2) == None
@@ -179,7 +179,7 @@ pub fn hybrid_nodes_test() {
   assert trie |> trie.get(key_4) == Some(6969)
   assert trie |> trie.get(key_5) == None
 
-  let trie = trie |> trie.remove(key_4)
+  trie |> trie.remove(key_4)
   assert trie |> trie.count_nodes() == #(0, 0, 0)
   assert trie |> trie.get(key_1) == None
   assert trie |> trie.get(key_2) == None
@@ -220,24 +220,24 @@ pub fn can_handle_hybrid_node_with_one_child_test() {
     )
 
   // Add the nodes and make sure put works correctly.
-  let original = original |> trie.put(key_1, 80_085)
+  original |> trie.put(key_1, 80_085)
   assert original |> trie.count_nodes() == #(0, 0, 1)
-  let original = original |> trie.put(key_2, 999)
+  original |> trie.put(key_2, 999)
   assert original |> trie.count_nodes() == #(0, 1, 1)
-  let original = original |> trie.put(key_3, 1337)
+  original |> trie.put(key_3, 1337)
   assert original |> trie.count_nodes() == #(0, 2, 1)
-  let original = original |> trie.put(key_4, 6969)
-  let original = original |> trie.update_root()
+  original |> trie.put(key_4, 6969)
+  original |> trie.update_root()
   assert original |> trie.count_nodes() == #(0, 2, 2)
 
   // Remove the nodes and make sure remove works correctly.
-  let original = original |> trie.remove(key_4)
+  original |> trie.remove(key_4)
   assert original |> trie.count_nodes() == #(0, 2, 1)
-  let original = original |> trie.remove(key_3)
+  original |> trie.remove(key_3)
   assert original |> trie.count_nodes() == #(0, 1, 1)
-  let original = original |> trie.remove(key_2)
+  original |> trie.remove(key_2)
   assert original |> trie.count_nodes() == #(0, 0, 1)
-  let original = original |> trie.remove(key_1)
+  original |> trie.remove(key_1)
   assert original |> trie.count_nodes() == #(0, 0, 0)
 
   original |> cleanup()
@@ -265,10 +265,10 @@ pub fn can_iterate_over_nodes_test() {
       },
     )
 
-  let trie = trie |> trie.put(key_1, 1)
-  let trie = trie |> trie.put(key_4, 4)
-  let trie = trie |> trie.put(key_2, 2)
-  let trie = trie |> trie.put(key_3, 3)
+  trie |> trie.put(key_1, 1)
+  trie |> trie.put(key_4, 4)
+  trie |> trie.put(key_2, 2)
+  trie |> trie.put(key_3, 3)
 
   let assert Ok(start_key) =
     key_nibbles.from_str("0000000000000000000000000000000000000000")

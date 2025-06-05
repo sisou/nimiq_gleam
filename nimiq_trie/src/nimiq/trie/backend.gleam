@@ -18,58 +18,58 @@ pub type Backend {
   Backend(
     store: Store,
     get: fn(Backend, KeyNibbles) -> Result(BitArray, Nil),
-    set: fn(Backend, KeyNibbles, BitArray) -> Backend,
-    del: fn(Backend, KeyNibbles) -> Backend,
+    set: fn(Backend, KeyNibbles, BitArray) -> Nil,
+    del: fn(Backend, KeyNibbles) -> Nil,
     keys: fn(Backend, KeyNibbles, KeyNibbles) -> List(KeyNibbles),
   )
 }
 
-pub fn memory() -> Backend {
-  Backend(
-    store: Memory(dict: dict.new()),
-    get: fn(backend, key) {
-      let assert Memory(dict:) = backend.store
-      dict |> dict.get(key |> key_nibbles.to_string())
-    },
-    set: fn(backend, key, value) {
-      let assert Memory(dict:) = backend.store
-      let dict = dict |> dict.insert(key |> key_nibbles.to_string(), value)
-      Backend(..backend, store: Memory(dict:))
-    },
-    del: fn(backend, key) {
-      let assert Memory(dict:) = backend.store
-      let dict = dict |> dict.delete(key |> key_nibbles.to_string())
-      Backend(..backend, store: Memory(dict:))
-    },
-    keys: fn(backend, start_key, end_key) {
-      let start_key = start_key |> key_nibbles.to_string()
-      let end_key = end_key |> key_nibbles.to_string()
+// pub fn memory() -> Backend {
+//   Backend(
+//     store: Memory(dict: dict.new()),
+//     get: fn(backend, key) {
+//       let assert Memory(dict:) = backend.store
+//       dict |> dict.get(key |> key_nibbles.to_string())
+//     },
+//     set: fn(backend, key, value) {
+//       let assert Memory(dict:) = backend.store
+//       let dict = dict |> dict.insert(key |> key_nibbles.to_string(), value)
+//       Backend(..backend, store: Memory(dict:))
+//     },
+//     del: fn(backend, key) {
+//       let assert Memory(dict:) = backend.store
+//       let dict = dict |> dict.delete(key |> key_nibbles.to_string())
+//       Backend(..backend, store: Memory(dict:))
+//     },
+//     keys: fn(backend, start_key, end_key) {
+//       let start_key = start_key |> key_nibbles.to_string()
+//       let end_key = end_key |> key_nibbles.to_string()
 
-      let key_length = start_key |> string.length()
-      let assert True = key_length == end_key |> string.length()
+//       let key_length = start_key |> string.length()
+//       let assert True = key_length == end_key |> string.length()
 
-      let assert Memory(dict:) = backend.store
-      dict
-      |> dict.keys()
-      |> list.filter(fn(key) {
-        key |> string.length() == key_length
-        && {
-          { key |> string.compare(start_key) == order.Gt }
-          || { key |> string.compare(start_key) == order.Eq }
-        }
-        && {
-          { key |> string.compare(end_key) == order.Lt }
-          || { key |> string.compare(end_key) == order.Eq }
-        }
-      })
-      |> list.sort(string.compare)
-      |> list.map(fn(str) {
-        let assert Ok(key) = key_nibbles.from_str(str)
-        key
-      })
-    },
-  )
-}
+//       let assert Memory(dict:) = backend.store
+//       dict
+//       |> dict.keys()
+//       |> list.filter(fn(key) {
+//         key |> string.length() == key_length
+//         && {
+//           { key |> string.compare(start_key) == order.Gt }
+//           || { key |> string.compare(start_key) == order.Eq }
+//         }
+//         && {
+//           { key |> string.compare(end_key) == order.Lt }
+//           || { key |> string.compare(end_key) == order.Eq }
+//         }
+//       })
+//       |> list.sort(string.compare)
+//       |> list.map(fn(str) {
+//         let assert Ok(key) = key_nibbles.from_str(str)
+//         key
+//       })
+//     },
+//   )
+// }
 
 pub type RedisMeta {
   RedisMeta(
@@ -116,14 +116,14 @@ pub fn redis(
           value |> bit_array.base64_encode(False),
           timeout,
         )
-      backend
+      Nil
     },
     del: fn(backend, key) {
       let assert Redis(client:, prefix:) = backend.store
       let assert Ok(_) =
         client
         |> radish.del([prefix <> key |> key_nibbles.to_string()], timeout)
-      backend
+      Nil
     },
     keys: fn(backend, start_key, end_key) {
       let assert Redis(client:, prefix:) = backend.store
