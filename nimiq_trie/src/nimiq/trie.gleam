@@ -262,7 +262,7 @@ fn put_raw(trie: MerkleRadixTrie(data), key: KeyNibbles, value: BitArray) -> Nil
   // And initialize the root path.
   let root_path: List(TrieNode) = list.new()
 
-  let #(trie, root_path, count_updates) =
+  let #(root_path, count_updates) =
     trie |> put_raw_loop(cur_node, root_path, key, value)
 
   trie |> update_keys(root_path, count_updates)
@@ -274,13 +274,13 @@ fn put_raw_loop(
   root_path: List(TrieNode),
   key: KeyNibbles,
   value: BitArray,
-) -> #(MerkleRadixTrie(data), List(TrieNode), CountUpdates) {
+) -> #(List(TrieNode), CountUpdates) {
   case cur_node.key |> key_nibbles.is_prefix_of(key) {
     // If the current node key is no longer a prefix for the given key then we need to
     // split the node.
     False -> {
       // Check if the new node is a sibling or the parent of cur_node.
-      let #(trie, root_path, count_updates) = case
+      let #(root_path, count_updates) = case
         key |> key_nibbles.is_prefix_of(cur_node.key)
       {
         True -> {
@@ -294,7 +294,7 @@ fn put_raw_loop(
           let root_path = root_path |> list.append([new_node])
           let count_updates =
             CountUpdates(..count_updates.default(), hybrids: 1)
-          #(trie, root_path, count_updates)
+          #(root_path, count_updates)
         }
         False -> {
           // The new node is a sibling of the current node. Thus it is a leaf node.
@@ -317,11 +317,11 @@ fn put_raw_loop(
             CountUpdates(..count_updates.default(), branches: 1, leaves: 1)
           // Push the parent node into the root path.
           let root_path = root_path |> list.append([new_parent])
-          #(trie, root_path, count_updates)
+          #(root_path, count_updates)
         }
       }
       // break
-      #(trie, root_path, count_updates)
+      #(root_path, count_updates)
     }
     True -> {
       // If the current node key is equal to the given key, we have found an existing node
@@ -339,7 +339,7 @@ fn put_raw_loop(
           // Push the node into the root path.
           let root_path = root_path |> list.append([cur_node])
           // break
-          #(trie, root_path, count_updates)
+          #(root_path, count_updates)
         }
         False -> {
           // Try to find a child of the current node that matches our key.
@@ -363,7 +363,7 @@ fn put_raw_loop(
               // Push the parent node into the root path.
               let root_path = root_path |> list.append([cur_node])
               // break
-              #(trie, root_path, count_updates)
+              #(root_path, count_updates)
             }
             // If there's a child, then we update the current node and the root path, and
             // continue down the trie.
@@ -400,7 +400,7 @@ fn remove_raw(trie: MerkleRadixTrie(data), key: KeyNibbles) -> Nil {
   let root_path: List(TrieNode) = list.new()
 
   // Go down the trie until you find the key.
-  let #(trie, root_path, should_continue) =
+  let #(root_path, should_continue) =
     trie |> remove_raw_loop(cur_node, root_path, key)
 
   case should_continue {
@@ -431,13 +431,13 @@ fn remove_raw_loop(
   cur_node: TrieNode,
   root_path: List(TrieNode),
   key: KeyNibbles,
-) -> #(MerkleRadixTrie(data), List(TrieNode), Bool) {
+) -> #(List(TrieNode), Bool) {
   case cur_node.key |> key_nibbles.is_prefix_of(key) {
     False -> {
       // If the current node key is no longer a prefix for the given key then the key doesn't
       // exist and we stop here.
       // return
-      #(trie, root_path, False)
+      #(root_path, False)
     }
     True -> {
       // If the current node key is equal to our given key, we have found our node.
@@ -454,7 +454,7 @@ fn remove_raw_loop(
               let num_children = cur_node |> node.iter_children() |> iv.length()
 
               // If it has only a single child and isn't the root node, merge it with that child.
-              let #(trie, root_path, count_updates) = case
+              let #(root_path, count_updates) = case
                 num_children == 1 && !{ cur_node |> node.is_root() }
               {
                 True -> {
@@ -478,7 +478,7 @@ fn remove_raw_loop(
                   let count_updates =
                     CountUpdates(..count_updates.default(), hybrids: -1)
 
-                  #(trie, root_path, count_updates)
+                  #(root_path, count_updates)
                 }
                 False -> {
                   // The node is root or has multiple children, thus we cannot remove it.
@@ -497,19 +497,19 @@ fn remove_raw_loop(
 
                   let root_path = root_path |> list.append([cur_node])
 
-                  #(trie, root_path, count_updates)
+                  #(root_path, count_updates)
                 }
               }
               // Update the keys and hashes of the rest of the root path.
               trie |> update_keys(root_path, count_updates)
               // return
-              #(trie, root_path, False)
+              #(root_path, False)
             }
             False -> {
               // Node was a leaf node, delete if from the database.
               trie |> remove_node(key)
               // break
-              #(trie, root_path, True)
+              #(root_path, True)
             }
           }
         }
@@ -519,7 +519,7 @@ fn remove_raw_loop(
             // If no matching child exists, then the key doesn't exist and we stop here.
             Error(_) -> {
               // return
-              #(trie, root_path, False)
+              #(root_path, False)
             }
             // If there's a child, then we update the current node and the root path, and
             // continue down the trie.
@@ -537,7 +537,6 @@ fn remove_raw_loop(
   }
 }
 
-// remove_raw_while(trie, root_path |> list.reverse(), child_key, count_updates)
 fn remove_raw_while(
   trie: MerkleRadixTrie(data),
   root_path_reversed: List(TrieNode),
