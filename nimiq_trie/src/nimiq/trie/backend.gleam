@@ -12,6 +12,11 @@ import radish/client as radish_client
 pub type Store {
   Memory(dict: Dict(String, BitArray))
   Redis(client: radish_client.Client, prefix: String)
+  ExternalRedis(
+    read_client: radish_client.Client,
+    write_client: radish_client.Client,
+    prefix: String,
+  )
 }
 
 pub type Backend {
@@ -138,6 +143,78 @@ pub fn redis(
 
       let assert Ok(keys) =
         client |> radish.keys(prefix <> common_prefix, timeout)
+
+      let prefix_length = prefix |> string.length()
+
+      keys
+      |> list.map(fn(key) { key |> string.drop_start(prefix_length) })
+      |> list.filter(fn(key) {
+        key |> string.length() == key_length
+        && {
+          { key |> string.compare(start_key) == order.Gt }
+          || { key |> string.compare(start_key) == order.Eq }
+        }
+        && {
+          { key |> string.compare(end_key) == order.Lt }
+          || { key |> string.compare(end_key) == order.Eq }
+        }
+      })
+      |> list.sort(string.compare)
+      |> list.map(fn(str) {
+        let assert Ok(key) = key_nibbles.from_str(str)
+        key
+      })
+    },
+  )
+}
+
+pub fn external_redis(
+  read_client read_client: radish_client.Client,
+  write_client write_client: radish_client.Client,
+  timeout timeout: Int,
+  key_prefix prefix: String,
+) -> Backend {
+  Backend(
+    store: ExternalRedis(read_client:, write_client:, prefix:),
+    get: fn(backend, key) {
+      let assert ExternalRedis(read_client:, prefix:, ..) = backend.store
+      read_client
+      |> radish.get(prefix <> key |> key_nibbles.to_string(), timeout)
+      |> result.replace_error(Nil)
+      |> result.map(bit_array.base64_decode)
+      |> result.flatten()
+    },
+    set: fn(backend, key, value) {
+      let assert ExternalRedis(write_client:, prefix:, ..) = backend.store
+      let assert Ok(_) =
+        write_client
+        |> radish.set(
+          prefix <> key |> key_nibbles.to_string(),
+          value |> bit_array.base64_encode(False),
+          timeout,
+        )
+      Nil
+    },
+    del: fn(backend, key) {
+      let assert ExternalRedis(write_client:, prefix:, ..) = backend.store
+      let assert Ok(_) =
+        write_client
+        |> radish.del([prefix <> key |> key_nibbles.to_string()], timeout)
+      Nil
+    },
+    keys: fn(backend, start_key, end_key) {
+      let assert ExternalRedis(read_client:, prefix:, ..) = backend.store
+      let start_key = start_key |> key_nibbles.to_string()
+      let end_key = end_key |> key_nibbles.to_string()
+
+      let key_length = start_key |> string.length()
+      let assert True = key_length == end_key |> string.length()
+
+      let common_prefix =
+        string_common_prefix(start_key, end_key) |> result.unwrap("*")
+
+      let assert Ok(keys) =
+        read_client |> radish.keys(prefix <> common_prefix, timeout)
 
       let prefix_length = prefix |> string.length()
 

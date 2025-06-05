@@ -18,9 +18,19 @@ pub fn simple_trie_test() {
   let assert Ok(key_1) =
     key_nibbles.from_str("e072fc4ad193341cb71e2547f30279999962d26c")
 
+  let assert Ok(read_client) =
+    radish.start("localhost", 6379, [radish.PoolSize(1)])
+  let assert Ok(write_client) =
+    radish.start("localhost", 6379, [radish.PoolSize(1)])
+
   let trie =
     trie.new(
-      backend.redis("localhost", 6379, [radish.PoolSize(1)], "redis_test"),
+      backend.external_redis(
+        read_client:,
+        write_client:,
+        timeout: 1000,
+        key_prefix: "external_redis_test:",
+      ),
       account.serialize_to_vec,
       fn(bytes: BitArray) {
         let assert Ok(account) = account.deserialize_all(bytes)
@@ -47,9 +57,19 @@ pub fn get_put_remove_test() {
   let assert Ok(key_3) = key_nibbles.from_str("413b397fa")
   let assert Ok(key_4) = key_nibbles.from_str("cfb986f5a")
 
+  let assert Ok(read_client) =
+    radish.start("localhost", 6379, [radish.PoolSize(1)])
+  let assert Ok(write_client) =
+    radish.start("localhost", 6379, [radish.PoolSize(1)])
+
   let trie =
     trie.new(
-      backend.redis("localhost", 6379, [radish.PoolSize(1)], "redis_test"),
+      backend.external_redis(
+        read_client:,
+        write_client:,
+        timeout: 1000,
+        key_prefix: "external_redis_test:",
+      ),
       fn(num: Int) { <<num:32>> },
       fn(bytes: BitArray) {
         case bytes {
@@ -118,9 +138,19 @@ pub fn hybrid_nodes_test() {
   let assert Ok(key_4) = key_nibbles.from_str("413b391")
   let assert Ok(key_5) = key_nibbles.from_str("412324")
 
+  let assert Ok(read_client) =
+    radish.start("localhost", 6379, [radish.PoolSize(1)])
+  let assert Ok(write_client) =
+    radish.start("localhost", 6379, [radish.PoolSize(1)])
+
   let trie =
     trie.new(
-      backend.redis("localhost", 6379, [radish.PoolSize(1)], "redis_test"),
+      backend.external_redis(
+        read_client:,
+        write_client:,
+        timeout: 1000,
+        key_prefix: "external_redis_test:",
+      ),
       fn(num: Int) { <<num:32>> },
       fn(bytes: BitArray) {
         case bytes {
@@ -207,9 +237,19 @@ pub fn can_handle_hybrid_node_with_one_child_test() {
   let assert Ok(key_3) = key_nibbles.from_str("413f227fa")
   let assert Ok(key_4) = key_nibbles.from_str("413b391")
 
+  let assert Ok(read_client) =
+    radish.start("localhost", 6379, [radish.PoolSize(1)])
+  let assert Ok(write_client) =
+    radish.start("localhost", 6379, [radish.PoolSize(1)])
+
   let original =
     trie.new(
-      backend.redis("localhost", 6379, [radish.PoolSize(1)], "redis_test"),
+      backend.external_redis(
+        read_client:,
+        write_client:,
+        timeout: 1000,
+        key_prefix: "external_redis_test:",
+      ),
       fn(num: Int) { <<num:32>> },
       fn(bytes: BitArray) {
         case bytes {
@@ -253,9 +293,19 @@ pub fn can_iterate_over_nodes_test() {
   let assert Ok(key_4) =
     key_nibbles.from_str("0000000300000000000000000000000000000000")
 
+  let assert Ok(read_client) =
+    radish.start("localhost", 6379, [radish.PoolSize(1)])
+  let assert Ok(write_client) =
+    radish.start("localhost", 6379, [radish.PoolSize(1)])
+
   let trie =
     trie.new(
-      backend.redis("localhost", 6379, [radish.PoolSize(1)], "redis_test"),
+      backend.external_redis(
+        read_client:,
+        write_client:,
+        timeout: 1000,
+        key_prefix: "external_redis_test:",
+      ),
       fn(num: Int) { <<num:32>> },
       fn(bytes: BitArray) {
         case bytes {
@@ -291,6 +341,6 @@ pub fn can_iterate_over_nodes_test() {
 }
 
 fn cleanup(trie: trie.MerkleRadixTrie(data)) {
-  let assert backend.Redis(client:, ..) = trie.table.store
-  client |> radish.execute(["FLUSHDB"], 1000)
+  let assert backend.ExternalRedis(write_client:, ..) = trie.table.store
+  write_client |> radish.execute(["FLUSHDB"], 1000)
 }
