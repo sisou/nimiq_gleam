@@ -4,14 +4,17 @@ import gleam/list
 import gleam/order
 import gleam/result
 import gleam/string
-import nimiq/trie/key_nibbles.{type KeyNibbles}
 
 import radish
 import radish/client as radish_client
 
+import nimiq/trie/key_nibbles.{type KeyNibbles}
+import nimiq/trie/sqlite_kv
+
 pub type Store {
   Memory(dict: Dict(String, BitArray))
   Redis(client: radish_client.Client, prefix: String)
+  Sqlite(conn: sqlite_kv.SqliteKv, prefix: String)
 }
 
 pub type Backend {
@@ -70,13 +73,6 @@ pub type Backend {
 //     },
 //   )
 // }
-
-pub type RedisMeta {
-  RedisMeta(
-    encode: fn(BitArray) -> String,
-    decode: fn(String) -> Result(BitArray, Nil),
-  )
-}
 
 pub fn redis(
   redis_host host: String,
@@ -138,6 +134,63 @@ pub fn redis(
 
       let assert Ok(keys) =
         client |> radish.keys(prefix <> common_prefix, timeout)
+
+      let prefix_length = prefix |> string.length()
+
+      keys
+      |> list.map(fn(key) { key |> string.drop_start(prefix_length) })
+      |> list.filter(fn(key) {
+        key |> string.length() == key_length
+        && {
+          { key |> string.compare(start_key) == order.Gt }
+          || { key |> string.compare(start_key) == order.Eq }
+        }
+        && {
+          { key |> string.compare(end_key) == order.Lt }
+          || { key |> string.compare(end_key) == order.Eq }
+        }
+      })
+      |> list.sort(string.compare)
+      |> list.map(fn(str) {
+        let assert Ok(key) = key_nibbles.from_str(str)
+        key
+      })
+    },
+  )
+}
+
+pub fn sqlite(path: String, key_prefix prefix: String) -> Backend {
+  let assert Ok(conn) = sqlite_kv.open(path)
+
+  Backend(
+    store: Sqlite(conn:, prefix:),
+    get: fn(backend, key) {
+      let assert Sqlite(conn:, prefix:) = backend.store
+      conn
+      |> sqlite_kv.get(prefix <> key |> key_nibbles.to_string())
+      |> result.replace_error(Nil)
+    },
+    set: fn(backend, key, value) {
+      let assert Sqlite(conn:, prefix:) = backend.store
+      let assert Ok(_) =
+        conn |> sqlite_kv.set(prefix <> key |> key_nibbles.to_string(), value)
+      Nil
+    },
+    del: fn(backend, key) {
+      let assert Sqlite(conn:, prefix:) = backend.store
+      let assert Ok(_) =
+        conn |> sqlite_kv.del(prefix <> key |> key_nibbles.to_string())
+      Nil
+    },
+    keys: fn(backend, start_key, end_key) {
+      let assert Sqlite(conn:, prefix:) = backend.store
+      let start_key = start_key |> key_nibbles.to_string()
+      let end_key = end_key |> key_nibbles.to_string()
+
+      let key_length = start_key |> string.length()
+      let assert True = key_length == end_key |> string.length()
+
+      let assert Ok(keys) = conn |> sqlite_kv.keys()
 
       let prefix_length = prefix |> string.length()
 
