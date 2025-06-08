@@ -1,20 +1,21 @@
 import gleam/bit_array
 import gleam/dict.{type Dict}
 import gleam/list
+import gleam/option
 import gleam/order
 import gleam/result
 import gleam/string
 
+import kvite.{type Kvite}
 import radish
 import radish/client as radish_client
 
 import nimiq/trie/key_nibbles.{type KeyNibbles}
-import nimiq/trie/sqlite_kv
 
 pub type Store {
   Memory(dict: Dict(String, BitArray))
   Redis(client: radish_client.Client, prefix: String)
-  Sqlite(conn: sqlite_kv.SqliteKv, prefix: String)
+  Sqlite(conn: Kvite, prefix: String)
 }
 
 pub type Backend {
@@ -160,26 +161,35 @@ pub fn redis(
 }
 
 pub fn sqlite(path: String, key_prefix prefix: String) -> Backend {
-  let assert Ok(conn) = sqlite_kv.open(path)
+  let assert Ok(conn) =
+    kvite.new()
+    |> kvite.with_path(path)
+    |> kvite.open()
 
+  external_sqlite(conn, prefix)
+}
+
+pub fn external_sqlite(conn: Kvite, key_prefix prefix: String) -> Backend {
   Backend(
     store: Sqlite(conn:, prefix:),
     get: fn(backend, key) {
       let assert Sqlite(conn:, prefix:) = backend.store
       conn
-      |> sqlite_kv.get(prefix <> key |> key_nibbles.to_string())
+      |> kvite.get(prefix <> key |> key_nibbles.to_string())
       |> result.replace_error(Nil)
+      |> result.map(option.to_result(_, Nil))
+      |> result.flatten()
     },
     set: fn(backend, key, value) {
       let assert Sqlite(conn:, prefix:) = backend.store
       let assert Ok(_) =
-        conn |> sqlite_kv.set(prefix <> key |> key_nibbles.to_string(), value)
+        conn |> kvite.set(prefix <> key |> key_nibbles.to_string(), value)
       Nil
     },
     del: fn(backend, key) {
       let assert Sqlite(conn:, prefix:) = backend.store
       let assert Ok(_) =
-        conn |> sqlite_kv.del(prefix <> key |> key_nibbles.to_string())
+        conn |> kvite.del(prefix <> key |> key_nibbles.to_string())
       Nil
     },
     keys: fn(backend, start_key, end_key) {
@@ -190,7 +200,7 @@ pub fn sqlite(path: String, key_prefix prefix: String) -> Backend {
       let key_length = start_key |> string.length()
       let assert True = key_length == end_key |> string.length()
 
-      let assert Ok(keys) = conn |> sqlite_kv.keys()
+      let assert Ok(keys) = conn |> kvite.keys()
 
       let prefix_length = prefix |> string.length()
 

@@ -3,11 +3,12 @@ import gleam/option.{None, Some}
 import gleam/string
 import gleam/yielder
 
+import kvite
+
 import account
 import nimiq/trie
 import nimiq/trie/backend
 import nimiq/trie/key_nibbles
-import nimiq/trie/sqlite_kv
 
 /// Adds one account to the trie and checks the root hash.
 pub fn simple_trie_test() {
@@ -300,13 +301,13 @@ pub fn transaction_test() {
 
   assert trie |> trie.count_nodes() == #(0, 0, 0)
 
-  let assert Ok(_) = conn |> sqlite_kv.begin_transaction()
+  let assert Ok(_) = conn |> kvite.begin_transaction()
   trie |> trie.put(key_1, 80_085)
   assert trie |> trie.count_nodes() == #(0, 0, 1)
   trie |> trie.put(key_2, 999)
   assert trie |> trie.count_nodes() == #(1, 0, 2)
   trie |> trie.put(key_3, 1337)
-  let assert Ok(_) = conn |> sqlite_kv.commit_transaction()
+  let assert Ok(_) = conn |> kvite.commit_transaction()
 
   assert trie |> trie.count_nodes() == #(2, 0, 3)
   assert trie |> trie.get(key_1) == Some(80_085)
@@ -314,34 +315,34 @@ pub fn transaction_test() {
   assert trie |> trie.get(key_3) == Some(1337)
   assert trie |> trie.get(key_4) == None
 
-  let assert Ok(_) = conn |> sqlite_kv.begin_transaction()
+  let assert Ok(_) = conn |> kvite.begin_transaction()
   trie |> trie.remove(key_4)
-  let assert Ok(_) = conn |> sqlite_kv.commit_transaction()
+  let assert Ok(_) = conn |> kvite.commit_transaction()
   assert trie |> trie.count_nodes() == #(2, 0, 3)
   assert trie |> trie.get(key_1) == Some(80_085)
   assert trie |> trie.get(key_2) == Some(999)
   assert trie |> trie.get(key_3) == Some(1337)
   assert trie |> trie.get(key_4) == None
 
-  let assert Ok(_) = conn |> sqlite_kv.begin_transaction()
+  let assert Ok(_) = conn |> kvite.begin_transaction()
   trie |> trie.remove(key_1)
   assert trie |> trie.count_nodes() == #(1, 0, 2)
-  let assert Ok(_) = conn |> sqlite_kv.commit_transaction()
+  let assert Ok(_) = conn |> kvite.commit_transaction()
   assert trie |> trie.get(key_1) == None
   assert trie |> trie.get(key_2) == Some(999)
   assert trie |> trie.get(key_3) == Some(1337)
   assert trie |> trie.get(key_4) == None
 
-  let assert Ok(_) = conn |> sqlite_kv.begin_transaction()
+  let assert Ok(_) = conn |> kvite.begin_transaction()
   trie |> trie.remove(key_2)
   assert trie |> trie.count_nodes() == #(0, 0, 1)
   assert trie |> trie.get(key_1) == None
-  let assert Ok(_) = conn |> sqlite_kv.commit_transaction()
+  let assert Ok(_) = conn |> kvite.commit_transaction()
   assert trie |> trie.get(key_2) == None
   assert trie |> trie.get(key_3) == Some(1337)
   assert trie |> trie.get(key_4) == None
 
-  let assert Ok(_) = conn |> sqlite_kv.begin_transaction()
+  let assert Ok(_) = conn |> kvite.begin_transaction()
   trie |> trie.remove(key_3)
   assert trie |> trie.count_nodes() == #(0, 0, 0)
   assert trie |> trie.get(key_1) == None
@@ -350,7 +351,7 @@ pub fn transaction_test() {
   assert trie |> trie.get(key_4) == None
 
   trie |> trie.remove(key_nibbles.root())
-  let assert Ok(_) = conn |> sqlite_kv.commit_transaction()
+  let assert Ok(_) = conn |> kvite.commit_transaction()
   assert trie |> trie.count_nodes() == #(0, 0, 0)
   assert trie |> trie.get(key_1) == None
   assert trie |> trie.get(key_2) == None
