@@ -838,3 +838,30 @@ pub fn iter_nodes(
     }
   })
 }
+
+/// This iterator is meant to start at `start_key` and finish at `end_key`, both of these are inclusive.
+pub fn iter_key_nodes(
+  trie: MerkleRadixTrie(data),
+  start_key start_key: KeyNibbles,
+  end_key end_key: KeyNibbles,
+) -> Yielder(#(KeyNibbles, data)) {
+  let assert True =
+    start_key |> key_nibbles.len() == end_key |> key_nibbles.len()
+    as "Start and end keys should have the same length"
+
+  let keys =
+    trie.table
+    |> trie.table.keys(start_key, end_key)
+
+  yielder.unfold(keys, fn(acc) {
+    case acc {
+      [] -> yielder.Done
+      [key, ..rest] -> {
+        let assert Some(node) = trie |> get_node(key)
+        let assert Some(value) = node.value
+        let value = value |> trie.deserializer()
+        yielder.Next(#(key, value), rest)
+      }
+    }
+  })
+}
