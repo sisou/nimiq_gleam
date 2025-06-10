@@ -13,7 +13,7 @@ packages = [
   { name = "gleeunit", version = "1.4.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleeunit", source = "hex", outer_checksum = "12A8A2B510D7063547CD73AE5345544AE92124247A82F46B05F5B0913EE28BC8" },
   { name = "gvarint", version = "1.0.2", build_tools = ["gleam"], requirements = ["gleam_stdlib", "varint"], otp_app = "gvarint", source = "hex", outer_checksum = "D8761B7FB70BE719D92F123E4AF7817F02F4CCCB692A715A05B6DE826717257D" },
   { name = "iv", version = "1.3.2", build_tools = ["gleam"], requirements = ["gleam_stdlib", "gleam_yielder"], otp_app = "iv", source = "hex", outer_checksum = "1FE22E047705BE69EA366E3A2E73C2E1310CBCB27DDE767DE17AE3FA86499947" },
-  { name = "kvite", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib", "sqlight"], otp_app = "kvite", source = "hex", outer_checksum = "1E1B21DB6CBC2CC44773487EFD76A2F5939735CA604F91F7207D22B6DB6A384D" },
+  { name = "kvite", version = "1.1.0", build_tools = ["gleam"], requirements = ["gleam_stdlib", "sqlight"], otp_app = "kvite", source = "hex", outer_checksum = "B758812B1B458F7B7362AA06747C9E60BACBF64E973C517DAC192B29E2C4F955" },
   { name = "lifeguard", version = "1.1.0", build_tools = ["gleam"], requirements = ["gleam_deque", "gleam_erlang", "gleam_otp", "gleam_stdlib"], otp_app = "lifeguard", source = "hex", outer_checksum = "043A44839FC9CCD209DE305F0EC96C09AB8F6A830D7346A49829321B148EE730" },
   { name = "mug", version = "1.2.0", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_stdlib"], otp_app = "mug", source = "hex", outer_checksum = "C5F62A3FD753B823CE296ED1B223D4B2FF06E91170A7DE35A283D70BB74B700E" },
   { name = "nimiq_blake2b", version = "1.0.0", build_tools = ["gleam"], requirements = ["gblake2", "gleam_stdlib"], source = "local", path = "../nimiq_blake2b" },
@@ -28,7 +28,7 @@ gleam_stdlib = { version = ">= 0.44.0 and < 2.0.0" }
 gleam_yielder = { version = ">= 1.1.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
 iv = { version = ">= 1.3.1 and < 2.0.0" }
-kvite = { version = ">= 1.0.0 and < 2.0.0" }
+kvite = { version = ">= 1.1.0 and < 2.0.0" }
 nimiq_blake2b = { path = "../nimiq_blake2b" }
 nimiq_serde = { path = "../nimiq_serde" }
 radish = { git = "https://github.com/sisou/radish.git", ref = "remove-pop-map" }

@@ -200,7 +200,10 @@ pub fn external_sqlite(conn: Kvite, key_prefix prefix: String) -> Backend {
       let key_length = start_key |> string.length()
       let assert True = key_length == end_key |> string.length()
 
-      let assert Ok(keys) = conn |> kvite.keys()
+      let common_prefix =
+        string_common_prefix(start_key, end_key) |> result.unwrap("")
+
+      let assert Ok(keys) = conn |> kvite.keys_prefix(common_prefix)
 
       let prefix_length = prefix |> string.length()
 
@@ -217,7 +220,7 @@ pub fn external_sqlite(conn: Kvite, key_prefix prefix: String) -> Backend {
           || { key |> string.compare(end_key) == order.Eq }
         }
       })
-      |> list.sort(string.compare)
+      // Keys are already sorted by Kvite
       |> list.map(fn(str) {
         let assert Ok(key) = key_nibbles.from_str(str)
         key
