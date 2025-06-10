@@ -97,6 +97,36 @@ pub fn from_user_friendly_address(str: String) -> Result(Address, String) {
   }
 }
 
+pub fn from_user_friendly_address_ccode(
+  str: String,
+  ccode: String,
+) -> Result(Address, String) {
+  let normalized = str |> string.replace(" ", "") |> string.uppercase()
+
+  use _ <- result.try(case string.slice(normalized, 0, 2) == ccode {
+    False -> Error("Invalid address: wrong country code")
+    True -> Ok(Nil)
+  })
+  use _ <- result.try(case string.length(normalized) == 36 {
+    False -> Error("Invalid address: wrong length")
+    True -> Ok(Nil)
+  })
+
+  // Calculate and check the checksum
+  let encoded = string.drop_start(normalized, 4)
+  use _ <- result.try(
+    case iban_check(encoded <> string.slice(normalized, 0, 4)) == 1 {
+      False -> Error("Invalid address: wrong checksum")
+      True -> Ok(Nil)
+    },
+  )
+
+  case base32.decode(encoded, nimiq_alphabet) {
+    Ok(buf) -> deserialize_all(buf)
+    Error(_) -> Error("Invalid address: not a valid user friendly encoding")
+  }
+}
+
 pub fn from_string(str: String) -> Result(Address, String) {
   from_user_friendly_address(str)
   |> result.lazy_or(fn() { from_hex(str) })
