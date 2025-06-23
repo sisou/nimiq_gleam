@@ -1,20 +1,19 @@
 import gleam/bit_array
 import gleam/dict.{type Dict}
 import gleam/list
-import gleam/option
+import gleam/option.{None}
 import gleam/order
 import gleam/result
 import gleam/string
 
 import kvite.{type Kvite}
-import radish
-import radish/client as radish_client
+import valkyrie
 
 import nimiq/trie/key_nibbles.{type KeyNibbles}
 
 pub type Store {
   Memory(dict: Dict(String, BitArray))
-  Redis(client: radish_client.Client, prefix: String)
+  Redis(client: valkyrie.Connection, prefix: String)
   Sqlite(conn: Kvite, prefix: String)
 }
 
@@ -78,28 +77,24 @@ pub type Backend {
 pub fn redis(
   redis_host host: String,
   redis_port port: Int,
-  radish_options options: List(radish.StartOption),
   key_prefix prefix: String,
 ) -> Backend {
-  // Extract the timeout option if it exists, defaulting to 1000 ms
-  let timeout =
-    options
-    |> list.find_map(fn(option) {
-      case option {
-        radish.Timeout(timeout) -> Ok(timeout)
-        _ -> Error(Nil)
-      }
-    })
-    |> result.unwrap(1000)
+  let timeout = 1000
 
-  let assert Ok(client) = radish.start(host, port, options)
+  let assert Ok(client) =
+    valkyrie.default_config()
+    |> valkyrie.host(host)
+    |> valkyrie.port(port)
+    // |> valkyrie.supervised_pool(size: 10, name: None, timeout: 1000)
+    // |> valkyrie.create_connection(timeout)
+    |> valkyrie.start_pool(3, None, timeout)
 
   Backend(
     store: Redis(client:, prefix:),
     get: fn(backend, key) {
       let assert Redis(client:, prefix:) = backend.store
       client
-      |> radish.get(prefix <> key |> key_nibbles.to_string(), timeout)
+      |> valkyrie.get(prefix <> key |> key_nibbles.to_string(), timeout)
       |> result.replace_error(Nil)
       |> result.map(bit_array.base64_decode)
       |> result.flatten()
@@ -108,9 +103,10 @@ pub fn redis(
       let assert Redis(client:, prefix:) = backend.store
       let assert Ok(_) =
         client
-        |> radish.set(
+        |> valkyrie.set(
           prefix <> key |> key_nibbles.to_string(),
           value |> bit_array.base64_encode(False),
+          None,
           timeout,
         )
       Nil
@@ -119,7 +115,7 @@ pub fn redis(
       let assert Redis(client:, prefix:) = backend.store
       let assert Ok(_) =
         client
-        |> radish.del([prefix <> key |> key_nibbles.to_string()], timeout)
+        |> valkyrie.del([prefix <> key |> key_nibbles.to_string()], timeout)
       Nil
     },
     keys: fn(backend, start_key, end_key) {
@@ -134,7 +130,7 @@ pub fn redis(
         string_common_prefix(start_key, end_key) |> result.unwrap("*")
 
       let assert Ok(keys) =
-        client |> radish.keys(prefix <> common_prefix, timeout)
+        client |> valkyrie.keys(prefix <> common_prefix, timeout)
 
       let prefix_length = prefix |> string.length()
 
