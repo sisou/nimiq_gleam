@@ -4,6 +4,7 @@ import gleam/string
 import nimiq/key/ed25519/private_key as ed25519_private_key
 import nimiq/key/ed25519/public_key as ed25519_public_key
 import nimiq/key/ed25519/signature as ed25519_signature
+import nimiq/key/public_key.{type PublicKey, EcDsaPublicKey, EdDsaPublicKey}
 import nimiq/transaction/signature_proof_algorithm.{type SignatureProofAlgorithm}
 
 pub type Signature {
@@ -17,6 +18,21 @@ pub fn create(
   data: BitArray,
 ) -> Signature {
   ed25519_signature.create(private, public, data) |> EdDsaSignature
+}
+
+pub fn verify(sig: Signature, pubkey: PublicKey, message: BitArray) -> Bool {
+  case sig, pubkey {
+    EdDsaSignature(sig), EdDsaPublicKey(pubkey) -> {
+      ed25519_signature.verify(sig, pubkey, message)
+    }
+    EcDsaSignature(_buf), EcDsaPublicKey(_pubkey) -> {
+      panic as "ECDSA verification not implemented"
+    }
+    _, _ -> {
+      // All other combinations are invalid
+      False
+    }
+  }
 }
 
 pub fn default() -> Signature {

@@ -24,6 +24,14 @@ pub fn create(
   ))
 }
 
+pub fn verify(sig: Signature, pubkey: PublicKey, message: BitArray) -> Bool {
+  ged25519.valid_signature(
+    sig.buf,
+    message,
+    public_key.serialize_to_bits(pubkey),
+  )
+}
+
 pub fn default() -> Signature {
   Signature(<<0:unit(8)-size(size)>>)
 }

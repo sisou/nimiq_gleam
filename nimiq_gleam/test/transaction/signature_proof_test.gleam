@@ -58,6 +58,37 @@ pub fn basic_signature_proof_test() {
     |> signature_proof.to_hex()
 }
 
+pub fn basic_signature_validation_test() {
+  // Transaction data is from my explanation of Nimiq's transaction serialization at
+  // https://gist.github.com/sisou/33ece69190cf38f884b1781ad9d5a106
+
+  let assert Ok(sender) =
+    "NQ17 D2ES UBTP N14D RG4E 2KBK 217A 2GH2 NNY1"
+    |> address.from_user_friendly_address()
+
+  let assert Ok(recipient) =
+    "NQ34 248H 248H 248H 248H 248H 248H 248H 248H"
+    |> address.from_user_friendly_address()
+
+  let tx =
+    transaction_builder.new_basic(
+      sender,
+      recipient,
+      Coin(100_000_000),
+      Coin(138),
+      100_000,
+      network_id.TestAlbatross,
+      None,
+    )
+
+  let assert Ok(proof) =
+    signature_proof.from_hex(
+      "003b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da2900e97d14e5ab8b9e9b71f7d2952457810ff5c8c762ab92dded852eb915ed38e1f0c1332abced2a6dec66cc4cbfd025de9609712582872f94eabc67644b4d4f360e",
+    )
+
+  assert signature_proof.verify(proof, transaction.serialize_content(tx))
+}
+
 pub fn regular_webauthn_signature_proof_test() {
   // Data from https://github.com/nimiq/core-rs-albatross/blob/88723146a0aa7124b3bfb0651b6c1f57ea1f87c5/primitives/transaction/tests/basic_account_verify.rs#L49
 

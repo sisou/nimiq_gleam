@@ -47,6 +47,10 @@ pub fn single_sig_webauthn(
   )
 }
 
+pub fn verify(proof: SignatureProof, message: BitArray) -> Bool {
+  signature.verify(proof.signature, proof.public_key, message)
+}
+
 pub fn default() -> SignatureProof {
   SignatureProof(
     public_key.default(),
@@ -87,6 +91,13 @@ pub fn deserialize_all(buf: BitArray) -> Result(SignatureProof, String) {
     Ok(#(proof, <<>>)) -> Ok(proof)
     Ok(_) -> Error("Invalid signature proof: trailing bytes")
     Error(err) -> Error(err)
+  }
+}
+
+pub fn from_hex(hex: String) -> Result(SignatureProof, String) {
+  case bit_array.base16_decode(hex) {
+    Ok(buf) -> deserialize_all(buf)
+    Error(_) -> Error("Invalid signature proof: not a valid hex encoding")
   }
 }
 
