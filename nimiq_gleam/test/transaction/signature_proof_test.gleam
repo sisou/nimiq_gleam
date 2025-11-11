@@ -1,7 +1,6 @@
 import gleam/bit_array
 import gleam/option.{None, Some}
 import gleam/result
-import gleam/string
 import nimiq/address
 import nimiq/coin.{Coin}
 import nimiq/key/ed25519/private_key as ed25519_private_key
@@ -51,17 +50,15 @@ pub fn basic_signature_proof_test() {
       transaction.serialize_content(tx),
     )
 
-  let assert "003b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da2900e97d14e5ab8b9e9b71f7d2952457810ff5c8c762ab92dded852eb915ed38e1f0c1332abced2a6dec66cc4cbfd025de9609712582872f94eabc67644b4d4f360e" =
-    signature_proof.single_sig(
+  assert "003b6a27bcceb6a42d62a3a8d02a6f0d73653215771de243a63ac048a18b59da2900e97d14e5ab8b9e9b71f7d2952457810ff5c8c762ab92dded852eb915ed38e1f0c1332abced2a6dec66cc4cbfd025de9609712582872f94eabc67644b4d4f360e"
+    == signature_proof.single_sig(
       EdDsaPublicKey(public_key),
       EdDsaSignature(signature),
     )
-    |> signature_proof.serialize_to_bits()
-    |> bit_array.base16_encode()
-    |> string.lowercase()
+    |> signature_proof.to_hex()
 }
 
-pub fn regualar_webauthn_signature_proof_test() {
+pub fn regular_webauthn_signature_proof_test() {
   // Data from https://github.com/nimiq/core-rs-albatross/blob/88723146a0aa7124b3bfb0651b6c1f57ea1f87c5/primitives/transaction/tests/basic_account_verify.rs#L49
 
   let assert Ok(public) =

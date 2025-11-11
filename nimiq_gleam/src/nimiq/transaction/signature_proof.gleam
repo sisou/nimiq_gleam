@@ -1,7 +1,9 @@
+import gleam/bit_array
 import gleam/bytes_tree.{type BytesTree}
 import gleam/int
 import gleam/option.{type Option, None, Some}
 import gleam/result
+import gleam/string
 import nimiq/key/public_key.{type PublicKey, EcDsaPublicKey, EdDsaPublicKey}
 import nimiq/key/signature.{type Signature}
 import nimiq/merkle/merkle_path.{type MerklePath}
@@ -134,6 +136,13 @@ pub fn serialize(builder: BytesTree, proof: SignatureProof) -> BytesTree {
 
 pub fn serialize_to_bits(proof: SignatureProof) -> BitArray {
   bytes_tree.new() |> serialize(proof) |> bytes_tree.to_bit_array()
+}
+
+pub fn to_hex(proof: SignatureProof) -> String {
+  proof
+  |> serialize_to_bits()
+  |> bit_array.base16_encode()
+  |> string.lowercase()
 }
 
 pub fn deserialize_type_and_flags_byte(
