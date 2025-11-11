@@ -18,6 +18,7 @@ jobs:
           gblake2,
           ged25519,
           gvarint,
+          nimiq_address,
           nimiq_blake2b,
           nimiq_bls,
           nimiq_cli,
