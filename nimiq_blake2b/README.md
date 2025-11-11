@@ -3,6 +3,8 @@
 [![Package Version](https://img.shields.io/hexpm/v/nimiq_blake2b)](https://hex.pm/packages/nimiq_blake2b)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/nimiq_blake2b/)
 
+Nimiq-style Blake2b hash function implementation for Gleam.
+
 ```sh
 gleam add nimiq_blake2b@1
 ```

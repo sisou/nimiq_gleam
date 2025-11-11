@@ -4,6 +4,7 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/string
 
+/// Encodes a BitArray into a base32 string using the provided alphabet.
 pub fn encode(buf: BitArray, alphabet: String) -> String {
   do_encode(buf, alphabet, "")
 }
@@ -33,6 +34,7 @@ fn do_encode(buf: BitArray, alphabet: String, acc: String) -> String {
   }
 }
 
+/// Decodes a base32 string into a BitArray using the provided alphabet.
 pub fn decode(str: String, alphabet: String) -> Result(BitArray, String) {
   let decoded =
     str

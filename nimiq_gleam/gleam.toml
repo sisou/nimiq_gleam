@@ -1,5 +1,5 @@
 name = "nimiq_gleam"
-version = "0.5.0"
+version = "0.6.0"
 
 description = "Various modules and helpers for working with Nimiq primitives in the Gleam programming language or as a CLI"
 licences = ["Apache-2.0"]
@@ -11,11 +11,16 @@ repository = { type = "github", user = "sisou", repo = "nimiq_gleam" }
 
 [dependencies]
 gleam_stdlib = ">= 0.34.0 and < 2.0.0"
-nimiq_serde = { path = "../nimiq_serde" }
+# nimiq_serde = { path = "../nimiq_serde" }
+nimiq_serde = ">= 1.0.0 and < 2.0.0"
+# ged25519 = { path = "../ged25519" }
 ged25519 = ">= 1.0.0 and < 2.0.0"
-nimiq_bls = { path = "../nimiq_bls" }
-nimiq_blake2b = { path = "../nimiq_blake2b" }
-nimiq_address = { path = "../nimiq_address" }
+# nimiq_bls = { path = "../nimiq_bls" }
+nimiq_bls = ">= 1.0.0 and < 2.0.0"
+# nimiq_blake2b = { path = "../nimiq_blake2b" }
+nimiq_blake2b = ">= 1.0.0 and < 2.0.0"
+# nimiq_address = { path = "../nimiq_address" }
+nimiq_address = ">= 1.0.0 and < 2.0.0"
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"

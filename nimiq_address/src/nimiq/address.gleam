@@ -17,14 +17,17 @@ pub opaque type Address {
   Address(buf: BitArray)
 }
 
+/// Creates an Address with all bytes set to zero (burn address).
 pub fn zero() -> Address {
   Address(<<0:unit(8)-size(size)>>)
 }
 
+/// Creates the staking contract address (all bytes zero except the last byte set to 1).
 pub fn staking_contract() -> Address {
   Address(<<1:unit(8)-size(size)>>)
 }
 
+/// Deserializes an Address from a BitArray.
 pub fn deserialize(buf: BitArray) -> Result(#(Address, BitArray), String) {
   case buf {
     <<bytes:unit(8)-size(size)-bytes, rest:bits>> -> Ok(#(Address(bytes), rest))
@@ -32,6 +35,7 @@ pub fn deserialize(buf: BitArray) -> Result(#(Address, BitArray), String) {
   }
 }
 
+/// Deserializes an Address from a BitArray, ensuring that all bytes are consumed.
 pub fn deserialize_all(buf: BitArray) -> Result(Address, String) {
   case deserialize(buf) {
     Ok(#(address, <<>>)) -> Ok(address)
@@ -40,6 +44,7 @@ pub fn deserialize_all(buf: BitArray) -> Result(Address, String) {
   }
 }
 
+/// Creates an Address from a hash (BitArray). The hash must be at least 20 bytes long.
 pub fn from_hash(hash: BitArray) -> Result(Address, String) {
   let buf = hash |> bit_array.slice(0, size)
 
@@ -49,6 +54,7 @@ pub fn from_hash(hash: BitArray) -> Result(Address, String) {
   }
 }
 
+/// Creates an Address from a hex string. The string must represent exactly 20 bytes.
 pub fn from_hex(hex: String) -> Result(Address, String) {
   case bit_array.base16_decode(hex) {
     Ok(buf) -> deserialize_all(buf)
@@ -56,6 +62,7 @@ pub fn from_hex(hex: String) -> Result(Address, String) {
   }
 }
 
+/// Creates an Address from a base64 string. The string must represent exactly 20 bytes.
 pub fn from_base64(base64: String) -> Result(Address, String) {
   case bit_array.base64_decode(base64) {
     Ok(buf) -> deserialize_all(buf)
@@ -63,6 +70,7 @@ pub fn from_base64(base64: String) -> Result(Address, String) {
   }
 }
 
+/// Creates an Address from a base64-url string. The string must represent exactly 20 bytes.
 pub fn from_base64_url(base64_url: String) -> Result(Address, String) {
   case bit_array.base64_url_decode(base64_url) {
     Ok(buf) -> deserialize_all(buf)
@@ -70,6 +78,7 @@ pub fn from_base64_url(base64_url: String) -> Result(Address, String) {
   }
 }
 
+/// Creates an Address from a user friendly address string.
 pub fn from_user_friendly_address(str: String) -> Result(Address, String) {
   let normalized = str |> string.replace(" ", "") |> string.uppercase()
 
@@ -97,6 +106,7 @@ pub fn from_user_friendly_address(str: String) -> Result(Address, String) {
   }
 }
 
+/// Creates an Address from a user friendly address string with a custom country code.
 pub fn from_user_friendly_address_ccode(
   str: String,
   ccode: String,
@@ -127,6 +137,7 @@ pub fn from_user_friendly_address_ccode(
   }
 }
 
+/// Creates an Address from a string in any supported format.
 pub fn from_string(str: String) -> Result(Address, String) {
   from_user_friendly_address(str)
   |> result.lazy_or(fn() { from_hex(str) })
@@ -135,14 +146,17 @@ pub fn from_string(str: String) -> Result(Address, String) {
   |> result.map_error(fn(_) { "Invalid address: unknown format" })
 }
 
+/// Serializes an Address into a BytesTree.
 pub fn serialize(builder: BytesTree, address: Address) -> BytesTree {
   builder |> bytes_tree.append(address.buf)
 }
 
+/// Serializes an Address to a BitArray.
 pub fn serialize_to_bits(address: Address) -> BitArray {
   address.buf
 }
 
+/// Converts an Address to its hex representation.
 pub fn to_hex(address: Address) -> String {
   address
   |> serialize_to_bits()
@@ -150,14 +164,17 @@ pub fn to_hex(address: Address) -> String {
   |> string.lowercase()
 }
 
+/// Converts an Address to its base64 representation.
 pub fn to_base64(address: Address) -> String {
   address |> serialize_to_bits() |> bit_array.base64_encode(True)
 }
 
+/// Converts an Address to its base64-url representation.
 pub fn to_base64_url(address: Address) -> String {
   address |> serialize_to_bits() |> bit_array.base64_url_encode(True)
 }
 
+/// Converts an Address to its user friendly address representation.
 pub fn to_user_friendly_address(address: Address) -> String {
   let encoded = base32.encode(address.buf, nimiq_alphabet)
   let check =
@@ -172,6 +189,7 @@ pub fn to_user_friendly_address(address: Address) -> String {
   |> string.join(" ")
 }
 
+/// Converts an Address to its user friendly address representation with a custom country code.
 pub fn to_user_friendly_address_ccode(address: Address, ccode: String) -> String {
   let encoded = base32.encode(address.buf, nimiq_alphabet)
   let check =
