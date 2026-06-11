@@ -184,13 +184,16 @@ pub fn to_user_friendly_address(address: Address) -> String {
   let address = ccode <> check <> encoded
 
   // Add spaces between every 4 characters
-  list.range(0, 8)
-  |> list.map(fn(i) { string.slice(address, i * 4, 4) })
-  |> string.join(" ")
+  int.range(1, 9, string.slice(address, 0, 4), fn(acc, i) {
+    acc <> " " <> string.slice(address, i * 4, 4)
+  })
 }
 
 /// Converts an Address to its user friendly address representation with a custom country code.
-pub fn to_user_friendly_address_ccode(address: Address, ccode: String) -> String {
+pub fn to_user_friendly_address_ccode(
+  address: Address,
+  ccode: String,
+) -> String {
   let encoded = base32.encode(address.buf, nimiq_alphabet)
   let check =
     { "00" <> int.to_string(98 - iban_check(encoded <> ccode <> "00")) }
@@ -199,9 +202,9 @@ pub fn to_user_friendly_address_ccode(address: Address, ccode: String) -> String
   let address = ccode <> check <> encoded
 
   // Add spaces between every 4 characters
-  list.range(0, 8)
-  |> list.map(fn(i) { string.slice(address, i * 4, 4) })
-  |> string.join(" ")
+  int.range(1, 9, string.slice(address, 0, 4), fn(acc, i) {
+    acc <> " " <> string.slice(address, i * 4, 4)
+  })
 }
 
 fn iban_check(str: String) -> Int {
@@ -218,7 +221,7 @@ fn iban_check(str: String) -> Int {
     })
     |> string.join("")
 
-  let range =
+  let tmp =
     num
     |> string.length()
     // Convert to float for lossless division
@@ -229,13 +232,7 @@ fn iban_check(str: String) -> Int {
     |> float.ceiling()
     // Convert back to int
     |> float.round()
-    |> int.subtract(1)
-    // Create a list of numbers starting at 0 until the result from above
-    |> list.range(0, _)
-
-  let tmp =
-    range
-    |> list.fold("", fn(tmp, i) {
+    |> int.range(0, _, "", fn(tmp, i) {
       { tmp <> string.slice(num, i * 6, 6) }
       |> int.parse()
       // We know that the string is only numbers, so parsing cannot fail
