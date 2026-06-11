@@ -23,8 +23,8 @@ packages = [
   { name = "kvite", version = "1.1.0", build_tools = ["gleam"], requirements = ["gleam_stdlib", "sqlight"], otp_app = "kvite", source = "hex", outer_checksum = "B758812B1B458F7B7362AA06747C9E60BACBF64E973C517DAC192B29E2C4F955" },
   { name = "logging", version = "1.5.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "logging", source = "hex", outer_checksum = "BC5F18CE5DD9686100229FE5409BDC3DD5C46D5A7DF2F804AD2D8F0DD6C5060E" },
   { name = "mug", version = "3.1.0", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_stdlib"], otp_app = "mug", source = "hex", outer_checksum = "C01279D98E40371DA23461774B63F0E3581B8F1396049D881B0C7EB32799D93F" },
-  { name = "nimiq_blake2b", version = "1.0.0", build_tools = ["gleam"], requirements = ["gblake2", "gleam_stdlib"], source = "local", path = "../nimiq_blake2b" },
-  { name = "nimiq_serde", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_stdlib", "gvarint"], source = "local", path = "../nimiq_serde" },
+  { name = "nimiq_blake2b", version = "1.0.0", build_tools = ["gleam"], requirements = ["gblake2", "gleam_stdlib"], otp_app = "nimiq_blake2b", source = "hex", outer_checksum = "3C650D957243A9D6412A40C1A20108C06B3422DB487C4127751DCF059CAD4854" },
+  { name = "nimiq_serde", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_stdlib", "gvarint"], otp_app = "nimiq_serde", source = "hex", outer_checksum = "CC4B4928D833E71AF7ABDF98800A7B164CD77DB27196354EDC587ED275818904" },
   { name = "sqlight", version = "1.1.0", build_tools = ["gleam"], requirements = ["esqlite", "gleam_stdlib"], otp_app = "sqlight", source = "hex", outer_checksum = "ECA1A4B45C35EB9EFCEEB7FAAC7BF5D8B2C777A7C1FC8A9C12CB67D54CED42E7" },
   { name = "valkyrie", version = "4.2.0", build_tools = ["gleam"], requirements = ["bath", "gleam_erlang", "gleam_otp", "gleam_stdlib", "gleam_time", "mug"], otp_app = "valkyrie", source = "hex", outer_checksum = "0860695B375E5784A1A3DEA74623704EEA16AC32AA44EDA9764719610FEB8FDA" },
   { name = "varint", version = "1.6.0", build_tools = ["mix"], requirements = [], otp_app = "varint", source = "hex", outer_checksum = "2B4F4A20650AEEBE993A70B03BB99571BCBDDC27C361322C28B586D8A772CE4E" },
@@ -36,6 +36,6 @@ gleam_yielder = { version = ">= 1.1.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
 iv = { version = ">= 1.3.1 and < 2.0.0" }
 kvite = { version = ">= 1.1.0 and < 2.0.0" }
-nimiq_blake2b = { path = "../nimiq_blake2b" }
-nimiq_serde = { path = "../nimiq_serde" }
+nimiq_blake2b = { version = ">= 1.0.0 and < 2.0.0" }
+nimiq_serde = { version = ">= 1.0.1 and < 2.0.0" }
 valkyrie = { version = ">= 4.0.0 and < 5.0.0" }
