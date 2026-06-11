@@ -24,7 +24,7 @@ pub fn badbadbad() -> KeyNibbles {
 }
 
 pub fn len(key: KeyNibbles) -> Int {
-  iv.length(key.nibbles)
+  iv.size(key.nibbles)
 }
 
 pub fn is_empty(key: KeyNibbles) -> Bool {

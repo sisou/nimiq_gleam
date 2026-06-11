@@ -455,7 +455,7 @@ fn remove_raw_loop(
           case cur_node |> node.is_root() || cur_node |> node.has_children() {
             True -> {
               // Node was a hybrid node and is now a branch node.
-              let num_children = cur_node |> node.iter_children() |> iv.length()
+              let num_children = cur_node |> node.iter_children() |> iv.size()
 
               // If it has only a single child and isn't the root node, merge it with that child.
               let #(root_path, count_updates) = case
@@ -469,7 +469,7 @@ fn remove_raw_loop(
                   let assert Ok(only_child_key) =
                     cur_node
                     |> node.iter_children()
-                    |> iv.first()
+                    |> iv.get(0)
                     |> result.map(fn(child) {
                       child |> node_child.key(cur_node.key)
                     })
@@ -563,7 +563,7 @@ fn remove_raw_while(
         )
 
       // Get the number of children of the node.
-      let num_children = parent_node |> node.iter_children() |> iv.length()
+      let num_children = parent_node |> node.iter_children() |> iv.size()
 
       // If the node has only a single child (and it isn't the root node), merge it with the
       // child.
@@ -583,7 +583,7 @@ fn remove_raw_while(
           let assert Ok(only_child_key) =
             parent_node
             |> node.iter_children()
-            |> iv.first()
+            |> iv.get(0)
             |> result.map(fn(child) { child |> node_child.key(parent_node.key) })
 
           let assert Some(only_child) = trie |> get_node(only_child_key)
