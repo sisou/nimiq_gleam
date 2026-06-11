@@ -93,7 +93,9 @@ pub type InternallyUnsignedTransaction {
   InternallyUnsignedTransaction(transaction: Transaction)
 }
 
-pub fn serialize_content(transaction: InternallyUnsignedTransaction) -> BitArray {
+pub fn serialize_content(
+  transaction: InternallyUnsignedTransaction,
+) -> BitArray {
   transaction.serialize_content(transaction.transaction)
 }
 

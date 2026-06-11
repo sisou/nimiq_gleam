@@ -254,7 +254,11 @@ pub fn put(
 
 /// Insert a value into the Merkle Radix Trie at the given key. If the key already exists then
 /// it will overwrite it. You can't use this function to check the existence of a given key.
-fn put_raw(trie: MerkleRadixTrie(data), key: KeyNibbles, value: BitArray) -> Nil {
+fn put_raw(
+  trie: MerkleRadixTrie(data),
+  key: KeyNibbles,
+  value: BitArray,
+) -> Nil {
   // Start by getting the root node.
   let assert Some(cur_node) = trie |> get_root()
     as "Merkle Radix Trie must have a root node!"

@@ -37,7 +37,9 @@ pub fn serialize_to_vec(child: TrieNodeChild) -> BitArray {
   bytes_tree.new() |> serialize(child) |> bytes_tree.to_bit_array()
 }
 
-pub fn deserialize(buf: BitArray) -> Result(#(TrieNodeChild, BitArray), String) {
+pub fn deserialize(
+  buf: BitArray,
+) -> Result(#(TrieNodeChild, BitArray), String) {
   use #(suffix, rest) <- result.try(key_nibbles.deserialize(buf))
   use #(hash, rest) <- result.try(serde.deserialize_bitarray(rest, 32))
   Ok(#(TrieNodeChild(suffix, hash), rest))

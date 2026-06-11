@@ -15,7 +15,9 @@ pub fn serialize_bytes(buf: BytesTree, data: BitArray) -> BytesTree {
 }
 
 /// Decodes a variable length byte array, reading its length from a varint prefix.
-pub fn deserialize_bytes(buf: BitArray) -> Result(#(BitArray, BitArray), String) {
+pub fn deserialize_bytes(
+  buf: BitArray,
+) -> Result(#(BitArray, BitArray), String) {
   let #(len, rest) = gvarint.decode(buf)
   case rest {
     <<data:unit(8)-size(len)-bytes, rest:bits>> -> Ok(#(data, rest))
@@ -49,7 +51,9 @@ pub fn serialize_string(buf: BytesTree, str: String) -> BytesTree {
 }
 
 /// Decodes a variable length string, reading its length from a varint prefix.
-pub fn deserialize_string(buf: BitArray) -> Result(#(String, BitArray), String) {
+pub fn deserialize_string(
+  buf: BitArray,
+) -> Result(#(String, BitArray), String) {
   let #(len, rest) = gvarint.decode(buf)
   case rest {
     <<data:unit(8)-size(len)-bytes, rest:bits>> -> {

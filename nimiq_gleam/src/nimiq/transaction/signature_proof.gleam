@@ -30,7 +30,10 @@ pub type WebauthnFields {
   )
 }
 
-pub fn single_sig(public_key: PublicKey, signature: Signature) -> SignatureProof {
+pub fn single_sig(
+  public_key: PublicKey,
+  signature: Signature,
+) -> SignatureProof {
   SignatureProof(public_key, merkle_path.empty(), signature, None)
 }
 
@@ -60,7 +63,9 @@ pub fn default() -> SignatureProof {
   )
 }
 
-pub fn deserialize(buf: BitArray) -> Result(#(SignatureProof, BitArray), String) {
+pub fn deserialize(
+  buf: BitArray,
+) -> Result(#(SignatureProof, BitArray), String) {
   use #(#(signature_alg, flags), rest) <- result.try(
     deserialize_type_and_flags_byte(buf),
   )
